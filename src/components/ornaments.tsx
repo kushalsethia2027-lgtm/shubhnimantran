@@ -119,7 +119,7 @@ export function Reveal({
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([e]) => e.isIntersecting && setInView(true),
+      (entries) => entries[0]?.isIntersecting && setInView(true),
       { threshold: 0.15 },
     );
     io.observe(el);
