@@ -9,6 +9,7 @@ import {
   Reveal,
   Toran,
 } from "@/components/ornaments";
+import { InvitePlayer } from "@/components/InvitePlayer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -302,6 +303,9 @@ function Landing() {
             Written the way your family <em className="foil not-italic italic">speaks</em>
           </h2>
         </div>
+        <Reveal className="relative mt-10">
+          <InvitePlayer />
+        </Reveal>
         <div className="relative mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
           {samples.map((s, i) => (
             <Reveal key={s.name} delay={i * 130}>
