@@ -483,6 +483,14 @@ function Landing() {
       <footer className="bg-cream px-5 py-10 text-center">
         <p className="foil font-display text-2xl">Nimantran</p>
         <p className="deva mt-1 text-xs text-maroon/70">निमंत्रण</p>
+        <nav className="mt-3 flex items-center justify-center gap-5 text-xs">
+          <Link to="/" className="text-muted-foreground transition hover:text-maroon">
+            Home
+          </Link>
+          <Link to="/product" className="text-muted-foreground transition hover:text-maroon">
+            How it works
+          </Link>
+        </nav>
         <p className="mt-3 text-xs text-muted-foreground">
           © {new Date().getFullYear()} Nimantran. Made for Indian weddings.
         </p>
