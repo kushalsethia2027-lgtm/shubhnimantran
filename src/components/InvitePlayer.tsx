@@ -23,7 +23,6 @@ export function InvitePlayer() {
           <Diya className="player-flicker absolute bottom-16 left-6 h-8 w-8 text-gold" />
           <Diya
             className="player-flicker absolute right-6 bottom-16 h-8 w-8 text-gold"
-            // @ts-expect-error style delay
             style={{ animationDelay: "0.7s" }}
           />
 
