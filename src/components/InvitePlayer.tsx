@@ -21,10 +21,12 @@ export function InvitePlayer() {
 
           {/* Diyas */}
           <Diya className="player-flicker absolute bottom-16 left-6 h-8 w-8 text-gold" />
-          <Diya
-            className="player-flicker absolute right-6 bottom-16 h-8 w-8 text-gold"
+          <span
+            className="player-flicker absolute right-6 bottom-16 inline-block"
             style={{ animationDelay: "0.7s" }}
-          />
+          >
+            <Diya className="h-8 w-8 text-gold" />
+          </span>
 
           {/* Invitation text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
