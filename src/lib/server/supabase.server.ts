@@ -51,7 +51,9 @@ export async function supa<T>(
   } catch {
     throw new ApiError(
       502,
-      "The database is temporarily unreachable. Your changes were not confirmed; reload before retrying.",
+      path.startsWith("/auth/v1/")
+        ? "The sign-in service is temporarily unreachable. Check your connection and try again later."
+        : "The database is temporarily unreachable. Your changes were not confirmed; reload before retrying.",
     );
   }
   const result = await response.text();
@@ -62,12 +64,68 @@ export async function supa<T>(
     parsed = null;
   }
   if (!response.ok) {
-    const record = parsed as { code?: string; message?: string } | null;
-    if (response.status === 400 && path.startsWith("/auth/v1/"))
-      throw new ApiError(
-        400,
-        "The sign-in code or email is invalid or expired. Request a new code and retry.",
-      );
+    const record = parsed as {
+      code?: string | number;
+      error_code?: string;
+      message?: string;
+    } | null;
+    const safeCode = (value: unknown) =>
+      typeof value === "number" || (typeof value === "string" && /^[A-Za-z0-9_]{1,60}$/.test(value))
+        ? value
+        : "unknown";
+    const auth = path.startsWith("/auth/v1/");
+    console.error(
+      JSON.stringify({
+        event: auth ? "auth.error" : "database.error",
+        endpoint: path.split("?")[0],
+        status: response.status,
+        code: safeCode(record?.error_code ?? record?.code),
+      }),
+    );
+    if (auth) {
+      if (
+        response.status === 429 ||
+        ["over_email_send_rate_limit", "over_request_rate_limit"].includes(record?.error_code ?? "")
+      )
+        throw new ApiError(
+          429,
+          "Supabase has reached its sign-in email or request limit. Wait before requesting another code. The built-in email service has a very small sending allowance; your SQL tables do not need to be recreated.",
+        );
+      if (record?.error_code === "email_address_not_authorized")
+        throw new ApiError(
+          403,
+          "Supabase's built-in email service can only send to authorised project-team addresses. Use your Supabase account email for testing, or configure a working SMTP service.",
+        );
+      if (
+        record?.error_code === "otp_expired" ||
+        record?.error_code === "otp_disabled" ||
+        (path === "/auth/v1/verify" && response.status === 403)
+      )
+        throw new ApiError(
+          400,
+          "This sign-in code is invalid, expired, or already used. Request a fresh code and enter the number in the app instead of clicking the email link.",
+        );
+      if (response.status >= 500 && path === "/auth/v1/otp")
+        throw new ApiError(
+          502,
+          "Supabase Auth failed while requesting your sign-in email. Check Supabase Logs → Auth for the detailed email-service or SMTP error.",
+        );
+      if (response.status === 400)
+        throw new ApiError(
+          400,
+          "The sign-in code or email is invalid or expired. Check the email address and use a fresh code.",
+        );
+      if (response.status === 401 && ["/auth/v1/otp", "/auth/v1/verify"].includes(path))
+        throw new ApiError(
+          503,
+          "Supabase rejected the app's authentication configuration. Check that the local project URL and API keys belong to the same project.",
+        );
+      if (response.status >= 500)
+        throw new ApiError(
+          502,
+          "The Supabase sign-in service failed. Check Supabase Logs → Auth for details.",
+        );
+    }
     if (response.status === 401) throw new ApiError(401, "Your session expired. Sign in again.");
     if (record?.code === "23505")
       throw new ApiError(
@@ -81,13 +139,6 @@ export async function supa<T>(
         409,
         record.message ?? "This operation is blocked by the current workflow state.",
       );
-    console.error(
-      JSON.stringify({
-        event: "database.error",
-        status: response.status,
-        code: record?.code ?? "unknown",
-      }),
-    );
     throw new ApiError(
       502,
       "The database rejected this request. Check that migrations are applied and the service is configured.",

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import { handleApi } from "../src/lib/server/api.server";
-import { authCookies, boundedBody } from "../src/lib/server/supabase.server";
+import { authCookies, boundedBody, supa } from "../src/lib/server/supabase.server";
 import { verifyTwilio } from "../src/lib/server/providers.server";
 const saved = { ...process.env };
 const originalFetch = globalThis.fetch;
@@ -116,5 +116,43 @@ describe("Twilio signature verification (local cryptographic tests)", () => {
       }),
     );
     expect(response.status).toBe(403);
+  });
+});
+
+describe("Supabase authentication error classification", () => {
+  function respond(status: number, body: unknown) {
+    process.env.SUPABASE_URL = "https://database.example.test";
+    process.env.SUPABASE_ANON_KEY = "fixture-public-key";
+    globalThis.fetch = mock(
+      async () => new Response(JSON.stringify(body), { status }),
+    ) as typeof fetch;
+  }
+  test("identifies the built-in email sending limit without blaming migrations", async () => {
+    respond(429, { code: 429, error_code: "over_email_send_rate_limit" });
+    await expect(supa("/auth/v1/otp", undefined, "POST", {})).rejects.toThrow(
+      "email or request limit",
+    );
+  });
+  test("identifies an auth-service 500 without exposing raw provider details", async () => {
+    respond(500, { code: 500, error_code: "unexpected_failure", msg: "private-provider-detail" });
+    await expect(supa("/auth/v1/otp", undefined, "POST", {})).rejects.toThrow(
+      "Supabase Auth failed",
+    );
+  });
+  test("explains default-email recipient restrictions", async () => {
+    respond(403, { error_code: "email_address_not_authorized" });
+    await expect(supa("/auth/v1/otp", undefined, "POST", {})).rejects.toThrow(
+      "authorised project-team",
+    );
+  });
+  test("treats a consumed or expired code as a verification error", async () => {
+    respond(403, { error_code: "otp_expired" });
+    await expect(supa("/auth/v1/verify", undefined, "POST", {})).rejects.toThrow("already used");
+  });
+  test("continues to distinguish actual database failures", async () => {
+    respond(404, { code: "PGRST202" });
+    await expect(supa("/rest/v1/rpc/take_rate_limit", undefined, "POST", {})).rejects.toThrow(
+      "database rejected",
+    );
   });
 });
