@@ -11,7 +11,6 @@ import {
   exampleData,
   importDemoCsv,
   invalidateApprovals,
-  representatives,
   storageKey,
   recordingContext,
   recordingMatches,
@@ -24,8 +23,8 @@ import { CameraRecorder } from "./CameraRecorder";
 const steps = [
   "Wedding",
   "Guests",
-  "Record voice / video",
   "Review scripts",
+  "Record voice / video",
   "Generate & download",
 ];
 type AudioChoice = {
@@ -74,8 +73,7 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   };
   const mediaStale =
     !!selected && !!audio && audio.source !== "example" && !recordingMatches(data, selected, audio);
-  const samples = representatives(data.guests);
-  const approvedSamples = samples.filter((g) => g.approved).length;
+  const approvedSamples = data.guests.filter((g) => g.approved).length;
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -381,9 +379,15 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                   setError(parsed.error.issues.map((i) => i.message).join("; "));
                   return;
                 }
-                update(invalidateApprovals(parsed.data));
+                update(
+                  data.bride === parsed.data.bride &&
+                    data.groom === parsed.data.groom &&
+                    data.city === parsed.data.city
+                    ? parsed.data
+                    : invalidateApprovals(parsed.data),
+                );
                 setNotice(
-                  "Wedding saved in this browser. Scripts need fresh review after wedding changes.",
+                  "Wedding saved in this browser. Changed wedding details need fresh script review; unchanged details keep approval.",
                 );
                 setStep(1);
               }}
@@ -661,10 +665,16 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                     setError("This name and relationship already exist.");
                     return;
                   }
+                  const savedGuest =
+                    current &&
+                    recordingContext(data, current) ===
+                      recordingContext(data, { ...parsed.data, script: current.script })
+                      ? { ...parsed.data, script: current.script, approved: current.approved }
+                      : parsed.data;
                   update({
                     ...data,
                     guests: current
-                      ? data.guests.map((g) => (g.id === current.id ? parsed.data : g))
+                      ? data.guests.map((g) => (g.id === current.id ? savedGuest : g))
                       : [...data.guests, parsed.data],
                   });
                   setEditGuest(null);
@@ -772,17 +782,17 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
               ))}
             </div>
             <button className="workspace-primary" onClick={() => setStep(2)}>
-              Continue to voice
+              Continue to script review
             </button>
           </div>
         )}
-        {step === 2 && (
+        {step === 3 && (
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="workspace-card workspace-form space-y-5">
               <h2 className="text-3xl text-maroon">A personal recording for every guest.</h2>
               <p className="workspace-note">
-                Each guest has their own audio or camera take. Switching guests never reuses someone
-                else’s recording.{" "}
+                Each guest has their own audio or camera take. A new take replaces that guest’s
+                previous recording. Switching guests never reuses someone else’s recording.{" "}
                 {
                   Object.keys(recordings).filter((id) => data.guests.some((g) => g.id === id))
                     .length
@@ -808,6 +818,14 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                   ))}
                 </select>
               </label>
+              {!selected?.approved && (
+                <p className="workspace-note">
+                  Review and approve this guest’s script before recording so the spoken words match.{" "}
+                  <button className="underline" disabled={recording} onClick={() => setStep(2)}>
+                    Review script
+                  </button>
+                </p>
+              )}
               <div className="rounded-xl bg-muted p-4 text-sm leading-7">
                 {selected
                   ? selected.script || buildInvitation(data, selected)
@@ -990,19 +1008,20 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                   Supabase or an AI provider. Refreshing removes it.
                 </p>
               </div>
-              <button className="workspace-primary" disabled={recording} onClick={() => setStep(3)}>
-                Continue to script review
+              <button className="workspace-primary" disabled={recording} onClick={() => setStep(4)}>
+                Continue to video & download
               </button>
             </div>
           </div>
         )}
-        {step === 3 && (
+        {step === 2 && (
           <div className="space-y-5">
             <div>
               <h2 className="text-3xl text-maroon">The right words. Your approval.</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                {approvedSamples} / 3 representative relationship scripts approved. Scripts are
-                built from your exact event details using local templates, not an AI API.
+                {approvedSamples} / {data.guests.length} guest scripts approved. Only the selected
+                guest needs approval to render. Scripts are built from your exact event details
+                using local templates, not an AI API.
               </p>
             </div>
             <div className="workspace-card flex flex-wrap items-center justify-between gap-4">
@@ -1019,8 +1038,8 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                       ...data,
                       guests: data.guests.map((g) => ({
                         ...g,
-                        script: buildInvitation(data, g),
-                        approved: false,
+                        script: g.script.trim() ? g.script : buildInvitation(data, g),
+                        approved: g.script.trim() ? g.approved : false,
                       })),
                     });
                     setNotice(
@@ -1034,12 +1053,6 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                 Create personalised scripts
               </button>
             </div>
-            {samples.length < 3 && (
-              <p className="workspace-note">
-                Add guests from three different relationship groups for the representative sample
-                review. Reset demo restores three examples.
-              </p>
-            )}
             {data.guests.map((g) => (
               <div key={g.id} className="workspace-card workspace-form space-y-4">
                 <div className="flex flex-wrap justify-between gap-2">
@@ -1053,11 +1066,7 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                     </p>
                   </div>
                   <span className="workspace-badge">
-                    {g.approved
-                      ? "Approved"
-                      : samples.some((s) => s.id === g.id)
-                        ? "Representative sample · needs review"
-                        : "Needs review"}
+                    {g.approved ? "Approved" : "Needs review"}
                   </span>
                 </div>
                 <label>
@@ -1111,8 +1120,8 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                 </button>
               </div>
             ))}
-            <button className="workspace-primary" onClick={() => setStep(4)}>
-              Continue to video & download
+            <button className="workspace-primary" onClick={() => setStep(3)}>
+              Continue to recording
             </button>
           </div>
         )}
@@ -1171,9 +1180,67 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                 <p className="text-xs text-muted-foreground">
                   Creates a genuine video locally using your browser’s encoder. MP4 is selected when
                   supported; otherwise you get a WebM file that plays in Chrome/Edge. Keep this tab
-                  visible. Rendering takes about the audio’s duration, with a minimum of 12 seconds.
+                  visible. The finished video lasts as long as your recording, with its original
+                  sound.
                 </p>
-                {blockReason && <p className="text-sm text-destructive">{blockReason}</p>}
+                {audio && audioUrl && (
+                  <div className="space-y-3 rounded-xl border p-4">
+                    <p className="text-sm font-semibold">
+                      {audio.kind === "video"
+                        ? "Camera video + recorded voice"
+                        : "Recorded narration"}{" "}
+                      for {selected?.name}
+                    </p>
+                    {audio.kind === "video" ? (
+                      <video
+                        controls
+                        playsInline
+                        src={audioUrl}
+                        className="aspect-video w-full rounded-lg bg-black"
+                        aria-label="Recording used for final video"
+                      />
+                    ) : (
+                      <audio
+                        controls
+                        src={audioUrl}
+                        className="w-full"
+                        aria-label="Recording used for final video"
+                      />
+                    )}
+                    <p className="text-xs">
+                      This exact recording will be embedded in the download.
+                      {audio.kind === "video"
+                        ? " Your camera footage appears inside the invitation frame."
+                        : " The invitation design plays with your recorded voice."}
+                    </p>
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        disabled={busy}
+                        onChange={(e) => setConsent(e.target.checked)}
+                      />
+                      I have permission to include this recording in the final video.
+                    </label>
+                  </div>
+                )}
+                {blockReason && (
+                  <div className="space-y-3" role="status">
+                    <p className="text-sm text-destructive">{blockReason}</p>
+                    <button
+                      className="workspace-secondary"
+                      onClick={() =>
+                        setStep(mediaStale || !audio ? 3 : !selected?.approved ? 2 : 3)
+                      }
+                    >
+                      {mediaStale || !audio
+                        ? "Go to this guest’s recording"
+                        : !selected?.approved
+                          ? "Review this guest’s script"
+                          : "Review recording permission"}
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-3">
                   <button
                     className="workspace-primary"
@@ -1233,9 +1300,9 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
               <div className="workspace-card space-y-3">
                 <h3 className="text-2xl">For the submission</h3>
                 <p className="text-sm leading-6">
-                  Demonstrate wedding edits, guest selection, local script creation, three sample
-                  approvals, actual recording or labelled example audio, then render and download.
-                  No sign-in, Supabase, paid provider or WhatsApp is required for this path.
+                  Demonstrate wedding edits, guest selection, local script creation, selected guest
+                  approval, actual recording or labelled example audio, then render and download. No
+                  sign-in, Supabase, paid provider or WhatsApp is required for this path.
                 </p>
                 <p className="text-sm leading-6">
                   To automatically speak different guest names in a cloned family voice, the

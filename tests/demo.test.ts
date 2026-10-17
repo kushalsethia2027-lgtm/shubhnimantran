@@ -27,9 +27,9 @@ describe("No-login demo actual workflow rules", () => {
     expect(text).toContain("Pinky Bua");
     expect(text).toContain("Mehndi");
   });
-  test("cannot render without real audio, permission and three sample approvals", () => {
+  test("cannot render without real audio, permission and selected guest approval", () => {
     const data = exampleData();
-    expect(canRender(data, "mama", false, false)).toContain("three");
+    expect(canRender(data, "mama", false, false)).toContain("Approve");
     const approved = {
       ...data,
       guests: data.guests.map((g) => ({ ...g, script: buildInvitation(data, g), approved: true })),
@@ -38,7 +38,7 @@ describe("No-login demo actual workflow rules", () => {
     expect(canRender(approved, "mama", true, false)).toContain("permission");
     expect(canRender(approved, "mama", true, true)).toBe(null);
   });
-  test("repeating the same relation cannot satisfy the three-group gate", () => {
+  test("one guest can render without unrelated relationship approvals", () => {
     const data = exampleData();
     data.guests = data.guests.map((g) => ({
       ...g,
@@ -47,7 +47,8 @@ describe("No-login demo actual workflow rules", () => {
       approved: true,
     }));
     expect(representatives(data.guests)).toHaveLength(1);
-    expect(canRender(data, "mama", true, true)).toContain("three");
+    data.guests = data.guests.slice(0, 1);
+    expect(canRender(data, "mama", true, true)).toBe(null);
   });
   test("wedding edits clear prior wording and approvals", () => {
     const data = exampleData();

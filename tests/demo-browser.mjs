@@ -3,12 +3,7 @@ import assert from "node:assert/strict";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH ?? "/usr/bin/chromium",
   headless: true,
-  args: [
-    "--no-sandbox",
-    "--use-fake-device-for-media-stream",
-    "--use-fake-ui-for-media-stream",
-    "--autoplay-policy=no-user-gesture-required",
-  ],
+  args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
 });
 try {
   const context = await browser.newContext({
@@ -38,22 +33,18 @@ try {
       .isDisabled(),
     true,
   );
-  await step(2);
+  await step(3);
   await page.getByRole("button", { name: "Use example narration", exact: true }).click();
   await page.getByText("Bundled Aarav–Meera example narration", { exact: true }).waitFor();
   await page.getByRole("checkbox", { name: /I have permission to use this audio/ }).check();
-  await step(3);
+  await step(2);
   await page.getByRole("button", { name: "Create personalised scripts", exact: true }).click();
   for (const name of ["Rajesh", "Sunita", "Rohan"])
     await page.getByRole("button", { name: `Approve ${name}’s script`, exact: true }).click();
-  await page
-    .getByText("3 / 3 representative relationship scripts approved.", { exact: false })
-    .waitFor();
+  await page.getByText("3 / 3 guest scripts approved.", { exact: false }).waitFor();
   await page.reload();
-  await step(3);
-  await page
-    .getByText("3 / 3 representative relationship scripts approved.", { exact: false })
-    .waitFor();
+  await step(2);
+  await page.getByText("3 / 3 guest scripts approved.", { exact: false }).waitFor();
   // Browser metadata persists, while audio deliberately does not survive a refresh.
   await step(4);
   assert.equal(
@@ -62,7 +53,7 @@ try {
       .isDisabled(),
     true,
   );
-  await step(2);
+  await step(3);
   await page.getByRole("button", { name: "Use example narration", exact: true }).click();
   await page.getByText("Bundled Aarav–Meera example narration", { exact: true }).waitFor();
   await page.getByRole("checkbox", { name: /I have permission to use this audio/ }).check();
@@ -99,7 +90,7 @@ try {
     "PASS: no-login real browser flow, actual local scripts and approvals, local draft restoration, audio privacy reset, real browser video generation and download, 390px layout, zero Supabase/provider calls",
   );
   // Editing an approved script invalidates approval and blocks another render.
-  await step(3);
+  await step(2);
   await page
     .getByRole("textbox", { name: "Invitation wording for Rajesh", exact: true })
     .fill("New wording needs review");
@@ -111,9 +102,9 @@ try {
     true,
   );
   console.log("PASS: editing approved wording blocks further rendering until reapproved");
-  await step(3);
-  await page.getByRole("button", { name: "Approve Rajesh’s script", exact: true }).click();
   await step(2);
+  await page.getByRole("button", { name: "Approve Rajesh’s script", exact: true }).click();
+  await step(3);
   await page.getByRole("button", { name: "Record my voice", exact: true }).click();
   await page.waitForFunction(
     () => Number(document.querySelector('[role="timer"]')?.textContent?.split(":")[1]) >= 4,

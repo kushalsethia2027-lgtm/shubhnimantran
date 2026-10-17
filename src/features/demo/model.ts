@@ -107,9 +107,6 @@ export function canRender(
   if (!guest) return "Choose a guest.";
   if (guest.events.some((id) => !data.events.some((e) => e.id === id)))
     return "This guest has an event that no longer exists. Update their events first.";
-  const samples = representatives(data.guests);
-  if (samples.length < 3 || samples.some((g) => !g.approved || !g.script.trim()))
-    return "Review and approve scripts from three different relationship groups first.";
   if (!guest.approved || !guest.script.trim())
     return "Approve this guest’s script before rendering.";
   if (!audioReady)

@@ -219,7 +219,7 @@ export async function renderInvitation({
       });
       if (signal.aborted) throw new DOMException("Rendering cancelled.", "AbortError");
     }
-    const duration = cameraClip ? buffer.duration : Math.max(12, buffer.duration);
+    const duration = buffer.duration;
     const destination = context.createMediaStreamDestination();
     source = context.createBufferSource();
     source.buffer = buffer;

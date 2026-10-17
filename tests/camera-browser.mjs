@@ -3,12 +3,7 @@ import assert from "node:assert/strict";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH ?? "/usr/bin/chromium",
   headless: true,
-  args: [
-    "--no-sandbox",
-    "--use-fake-device-for-media-stream",
-    "--use-fake-ui-for-media-stream",
-    "--autoplay-policy=no-user-gesture-required",
-  ],
+  args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
 });
 try {
   const context = await browser.newContext({
@@ -29,11 +24,10 @@ try {
   await page.getByRole("heading", { name: "An invitation worth keeping." }).waitFor();
   const step = async (i) =>
     page.getByRole("navigation", { name: "Demo steps" }).getByRole("button").nth(i).click();
-  await step(3);
-  await page.getByRole("button", { name: "Create personalised scripts", exact: true }).click();
-  for (const name of ["Rajesh", "Sunita", "Rohan"])
-    await page.getByRole("button", { name: `Approve ${name}’s script`, exact: true }).click();
   await step(2);
+  await page.getByRole("button", { name: "Create personalised scripts", exact: true }).click();
+  await page.getByRole("button", { name: "Approve Rajesh’s script", exact: true }).click();
+  await step(3);
   // Simulate an explicit permission denial, then restore the real test device.
   await page.evaluate(() => {
     window.__testMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
@@ -105,7 +99,17 @@ try {
   await page.getByRole("combobox", { name: "Script to read", exact: true }).selectOption("mama");
   await page.getByText("Personal camera recording for Rajesh", { exact: true }).waitFor();
   assert.equal(await permission.isChecked(), true);
+  // Recreating drafts must preserve reviewed wording, approvals and the recorded take.
+  await step(2);
+  await page.getByRole("button", { name: "Create personalised scripts", exact: true }).click();
+  await page.getByRole("button", { name: "Reopen Rajesh’s script", exact: true }).waitFor();
+  // Saving unchanged wedding fields also must not invalidate the recording.
+  await step(0);
+  await page.getByRole("button", { name: "Save wedding & continue", exact: true }).click();
+  await page.getByRole("button", { name: "Edit", exact: true }).first().click();
+  await page.getByRole("button", { name: "Save guest", exact: true }).click();
   await step(4);
+  await page.getByLabel("Recording used for final video").waitFor();
   await page.getByRole("button", { name: "Generate downloadable video", exact: true }).click();
   await page
     .getByRole("heading", { name: "Your generated invitation", exact: true })
@@ -131,7 +135,7 @@ try {
   );
   console.log("CAMERA INVITATION", JSON.stringify(metadata));
   await page.screenshot({ path: "/tmp/nimantran-camera-mobile.png", fullPage: true });
-  await step(3);
+  await step(2);
   await page
     .getByRole("textbox", { name: "Invitation wording for Rajesh", exact: true })
     .fill("Updated words require a new recording.");
