@@ -6,7 +6,18 @@ import { resolve } from "node:path";
 export default defineConfig({
   root: resolve(import.meta.dirname, "demo-site"),
   base: "./",
+  appType: "mpa",
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": resolve(import.meta.dirname, "src") } },
-  build: { outDir: resolve(import.meta.dirname, "dist-demo"), emptyOutDir: true },
+  build: {
+    outDir: resolve(import.meta.dirname, "dist-demo"),
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        home: resolve(import.meta.dirname, "demo-site/index.html"),
+        demo: resolve(import.meta.dirname, "demo-site/demo/index.html"),
+        product: resolve(import.meta.dirname, "demo-site/product/index.html"),
+      },
+    },
+  },
 });

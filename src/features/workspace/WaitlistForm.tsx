@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "./client";
-export function WaitlistForm() {
+export function WaitlistForm({ available = true }: { available?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ eligible: boolean } | null>(null);
@@ -23,6 +23,7 @@ export function WaitlistForm() {
       className="card-ornate workspace-form mt-8 space-y-4 p-6 text-left text-ink"
       onSubmit={async (event) => {
         event.preventDefault();
+        if (!available) return;
         const data = Object.fromEntries(new FormData(event.currentTarget));
         setBusy(true);
         setError("");
@@ -81,7 +82,16 @@ export function WaitlistForm() {
           {error}
         </p>
       )}
-      <button className="workspace-primary w-full" disabled={busy}>
+      {!available && (
+        <p className="text-sm text-maroon">
+          Waitlist registration is not open on this site yet. You can{" "}
+          <a href="/demo/" className="underline">
+            create and download your invitation now
+          </a>{" "}
+          without signing in.
+        </p>
+      )}
+      <button className="workspace-primary w-full" disabled={busy || !available}>
         {busy ? "Saving…" : "Join the waitlist"}
       </button>
     </form>

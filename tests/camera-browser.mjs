@@ -19,7 +19,8 @@ try {
     if (r.url().includes("/api/nimantran/")) requests.push(r.url());
   });
   await page.goto(
-    (process.env.TEST_BASE_URL ?? "http://127.0.0.1:4173") + (process.env.TEST_DEMO_PATH ?? "/"),
+    (process.env.TEST_BASE_URL ?? "http://127.0.0.1:4173") +
+      (process.env.TEST_DEMO_PATH ?? "/demo/"),
   );
   await page.getByRole("heading", { name: "An invitation worth keeping." }).waitFor();
   const step = async (i) =>

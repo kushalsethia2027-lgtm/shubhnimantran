@@ -47,7 +47,7 @@ npm run dev -- --host 127.0.0.1 --port 3000 --strictPort
 
 ## If a public website URL is required
 
-A self-contained static build is included as `submission/nimantran-demo-site.zip`.
+A static build of the full website is included as `submission/nimantran-demo-site.zip`. The original landing page opens at `/`, the recording studio at `/demo/`, and the original product page at `/product/`. Use the homepage’s “Try demo · download your video” button to open the studio.
 
 1. Download that ZIP from the GitHub branch and extract it. Find the folder that contains `index.html` and `assets` directly.
 2. Open https://app.netlify.com/drop and sign in to Netlify if requested (GitHub sign-in is an option).
@@ -63,7 +63,9 @@ npm run build:demo
 npm run preview:demo
 ```
 
-The built files are in `dist-demo`. The preview address is printed by Vite (normally http://127.0.0.1:4173).
+The built files are in `dist-demo`. The preview address is printed by Vite (normally http://127.0.0.1:4173). This opens the landing page; the studio is at http://127.0.0.1:4173/demo/.
+
+For GitHub-connected Netlify deployments, keep branch `nimantran-mvp`, build command `npm run build:demo`, and publish directory `dist-demo`. That build now includes the landing page and separate studio; no DNS changes are needed. Account access and waitlist registration require the server-backed deployment; the static waitlist form explicitly shows that registration is not open.
 
 ## Files and privacy
 
