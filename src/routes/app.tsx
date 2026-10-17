@@ -167,6 +167,11 @@ function Application() {
           </div>
         </div>
       </header>
+      <nav className="mx-auto max-w-7xl px-4 py-2 text-sm" aria-label="Additional wedding tools">
+        <a href="/planner/" className="text-maroon underline">
+          Guest & Travel Planner
+        </a>
+      </nav>
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
         <div className="mb-7 flex items-start gap-3">
           <Heart className="mt-1 shrink-0 text-maroon" size={20} />

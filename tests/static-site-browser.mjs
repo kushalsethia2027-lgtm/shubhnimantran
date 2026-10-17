@@ -51,9 +51,20 @@ try {
   await page.getByRole("heading", { name: /Every guest gets a personal invitation/ }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   assert.deepEqual(errors, []);
+  const privateRequests = [];
+  page.on("request", (r) => {
+    if (r.url().includes(".supabase.co")) privateRequests.push(r.url());
+  });
+  await page.getByRole("link", { name: "Guest & Travel Planner", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Connect Guest & Travel Planner", exact: true })
+    .waitFor();
+  await page.getByText("Shared planning is not connected.", { exact: false }).waitFor();
+  assert.deepEqual(privateRequests, []);
+  await page.getByRole("link", { name: "Nimantran", exact: true }).click();
   await page.screenshot({ path: "/tmp/nimantran-restored-home.png", fullPage: true });
   console.log(
-    "PASS: original landing sections and playable bundled MP4; static waitlist is honest; homepage → product → home → studio → home; direct page reloads; mobile layout",
+    "PASS: original landing sections and playable bundled MP4; static waitlist is honest; homepage → product → home → studio → home; direct page reloads; unconfigured planner setup without private requests; mobile layout",
   );
 } finally {
   await browser.close();

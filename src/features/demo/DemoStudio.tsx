@@ -303,6 +303,9 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
             Nimantran
           </a>
           <div className="flex items-center gap-3">
+            <a href="/planner/" className="text-sm text-maroon underline">
+              Guest & Travel Planner
+            </a>
             <span className="workspace-badge">No-login browser studio</span>
             {!standalone && (
               <a className="text-sm text-maroon underline" href="/app">

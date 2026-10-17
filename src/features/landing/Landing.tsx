@@ -176,7 +176,10 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
             <p className="foil font-display text-2xl leading-none font-semibold">Nimantran</p>
             <p className="deva text-[11px] text-maroon/70">निमंत्रण</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <a href="/planner/" className="text-xs font-semibold text-maroon underline">
+              Guest & Travel Planner
+            </a>
             <a
               href={standalone ? "/demo/" : "/app"}
               className="text-xs font-semibold text-maroon underline"

@@ -17,6 +17,7 @@ else
  files+=(supabase/migrations/*.sql)
 fi
 files+=(tests/database.sql)
+if [[ "${1:-}" != "--setup" ]]; then files+=(tests/planner-database.sql); fi
 for file in "${files[@]}"; do
  docker exec -i "$name" psql -U postgres -v ON_ERROR_STOP=1 < "$file"
 done

@@ -6,10 +6,12 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
+import { plannerEnvironmentGuard } from "./scripts/planner-env";
 
 export default defineConfig({
   vite: {
     plugins: [
+      plannerEnvironmentGuard(),
       {
         name: "nimantran-server-environment",
         configResolved(config) {

@@ -101,3 +101,7 @@ Speaker self-declaration and a recording alone are not proof of identity or prov
 Proposed retention: raw/generated media up to 30 days after the final event, guest details up to 90 days, restricted consent/audit evidence up to one year. **The cleanup scheduler and legal review are launch blockers, not deployed capabilities.** Review DPDP obligations, notices, processor agreements, cross-border handling, access rights and retention before launch. No legal compliance is claimed.
 
 See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for exact delivered scope, unverified integrations and severity-ordered launch requirements.
+
+## Guest & Travel Planner
+
+The additive `/planner/` module supports separate authenticated family planners, shared travel/logistics and Supabase persistence. See [setup, schema, permissions and acceptance checks](docs/GUEST-TRAVEL-PLANNER.md). Public browser environment values and the new migration are required; until configured, the module shows setup instructions. Existing invitation flows remain available.
