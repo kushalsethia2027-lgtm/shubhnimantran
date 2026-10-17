@@ -37,6 +37,7 @@ export function drawInvitation(
   data: DemoData,
   guest: DemoGuest,
   progress = 0,
+  camera?: HTMLVideoElement,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -93,7 +94,36 @@ export function drawInvitation(
   ctx.fillText(guest.relation, 270, 541);
   const events = data.events.filter((e) => guest.events.includes(e.id));
   ctx.fillStyle = p.ink;
-  if (progress < 0.35) {
+  if (camera && camera.readyState >= 2) {
+    const x = 65,
+      y = 566,
+      w = 410,
+      h = 234;
+    ctx.fillStyle = "#0e0c0b";
+    ctx.fillRect(x, y, w, h);
+    const scale = Math.min(w / camera.videoWidth, h / camera.videoHeight);
+    const width = camera.videoWidth * scale,
+      height = camera.videoHeight * scale;
+    ctx.drawImage(camera, x + (w - width) / 2, y + (h - height) / 2, width, height);
+    ctx.strokeStyle = p.gold;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+    const event = events[Math.min(events.length - 1, Math.floor(progress * events.length))];
+    if (event) {
+      ctx.fillStyle = p.ink;
+      ctx.font = "19px Arial, 'Nirmala UI', sans-serif";
+      let y = 834;
+      for (const line of linesFor(ctx, `${event.name} · ${event.date}`, 420).slice(0, 2)) {
+        ctx.fillText(line, 270, y);
+        y += 24;
+      }
+      ctx.font = "16px Arial, 'Nirmala UI', sans-serif";
+      for (const line of linesFor(ctx, event.venue, 420).slice(0, 2)) {
+        ctx.fillText(line, 270, y);
+        y += 21;
+      }
+    }
+  } else if (progress < 0.35) {
     ctx.font = "25px Georgia, serif";
     ctx.fillText("Your presence is our blessing", 270, 610);
     ctx.font = "18px Arial, sans-serif";
@@ -132,6 +162,7 @@ export async function renderInvitation({
   data,
   guest,
   audio,
+  cameraClip,
   signal,
   onProgress,
 }: {
@@ -139,6 +170,7 @@ export async function renderInvitation({
   data: DemoData;
   guest: DemoGuest;
   audio: ArrayBuffer;
+  cameraClip?: Blob;
   signal: AbortSignal;
   onProgress: (value: number) => void;
 }): Promise<RenderResult> {
@@ -149,6 +181,8 @@ export async function renderInvitation({
   let recorder: MediaRecorder | undefined;
   let frame = 0;
   let source: AudioBufferSourceNode | undefined;
+  let camera: HTMLVideoElement | undefined;
+  let cameraUrl: string | undefined;
   try {
     // Resume inside the user-initiated click before decoding to satisfy autoplay rules.
     await context.resume();
@@ -156,12 +190,41 @@ export async function renderInvitation({
     if (buffer.duration < 1 || buffer.duration > 65)
       throw new Error("Use an audio recording between 1 and 65 seconds.");
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-    const duration = Math.max(12, buffer.duration);
+    if (cameraClip) {
+      camera = document.createElement("video");
+      camera.muted = true;
+      camera.playsInline = true;
+      camera.preload = "auto";
+      cameraUrl = URL.createObjectURL(cameraClip);
+      const clip = camera;
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(
+          () => finish(new Error("Camera recording could not be loaded. Re-record and retry.")),
+          15000,
+        );
+        const abort = () => finish(new DOMException("Rendering cancelled.", "AbortError"));
+        const finish = (error?: Error) => {
+          clearTimeout(timeout);
+          signal.removeEventListener("abort", abort);
+          clip.onloadeddata = null;
+          clip.onerror = null;
+          if (error) reject(error);
+          else resolve();
+        };
+        clip.onloadeddata = () => finish();
+        clip.onerror = () => finish(new Error("This browser cannot decode the camera recording."));
+        signal.addEventListener("abort", abort, { once: true });
+        clip.src = cameraUrl!;
+        clip.load();
+      });
+      if (signal.aborted) throw new DOMException("Rendering cancelled.", "AbortError");
+    }
+    const duration = cameraClip ? buffer.duration : Math.max(12, buffer.duration);
     const destination = context.createMediaStreamDestination();
     source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(destination);
-    drawInvitation(canvas, data, guest, 0);
+    drawInvitation(canvas, data, guest, 0, camera);
     const videoStream = canvas.captureStream(24);
     stream = new MediaStream([
       ...videoStream.getVideoTracks(),
@@ -193,6 +256,8 @@ export async function renderInvitation({
       );
     const active = recorder;
     const chunks: Blob[] = [];
+    if (camera) await camera.play();
+    if (signal.aborted) throw new DOMException("Rendering cancelled.", "AbortError");
     const result = new Promise<RenderResult>((resolve, reject) => {
       let done = false;
       const abort = () => {
@@ -231,7 +296,7 @@ export async function renderInvitation({
     const tick = () => {
       if (signal.aborted) return;
       const progress = Math.min((performance.now() - started) / (duration * 1000), 1);
-      drawInvitation(canvas, data, guest, progress);
+      drawInvitation(canvas, data, guest, progress, camera);
       onProgress(progress);
       if (progress < 1) frame = requestAnimationFrame(tick);
       else if (active.state !== "inactive") active.stop();
@@ -247,6 +312,12 @@ export async function renderInvitation({
     }
     if (recorder && recorder.state !== "inactive") recorder.stop();
     stream?.getTracks().forEach((track) => track.stop());
+    if (camera) {
+      camera.pause();
+      camera.removeAttribute("src");
+      camera.load();
+    }
+    if (cameraUrl) URL.revokeObjectURL(cameraUrl);
     await context.close();
   }
 }

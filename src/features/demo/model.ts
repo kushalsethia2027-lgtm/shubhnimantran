@@ -165,3 +165,45 @@ export function importDemoCsv(
     return { line: i + 2, guest: result.success ? result.data : null, errors };
   });
 }
+
+// Bind a real recording to the exact guest and invitation it was made for.
+// Approving the same wording or changing colours does not invalidate the audio.
+export function recordingContext(data: DemoData, guest: DemoGuest): string {
+  return JSON.stringify({
+    bride: data.bride,
+    groom: data.groom,
+    city: data.city,
+    name: guest.name,
+    relation: guest.relation,
+    language: guest.language,
+    pronunciation: guest.phonetics,
+    script: guest.script || buildInvitation(data, guest),
+    events: data.events.filter((e) => guest.events.includes(e.id)),
+  });
+}
+export function recordingMatches(
+  data: DemoData,
+  guest: DemoGuest,
+  recording: { guestId: string; context: string },
+): boolean {
+  return recording.guestId === guest.id && recording.context === recordingContext(data, guest);
+}
+
+export function recordingExtension(mime: string): string {
+  const type = mime.split(";")[0]?.toLowerCase();
+  const extensions: Record<string, string> = {
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/mp4": "m4a",
+    "audio/x-m4a": "m4a",
+    "video/mp4": "mp4",
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/ogg": "ogg",
+    "video/ogg": "ogv",
+    "audio/webm": "webm",
+    "video/webm": "webm",
+    "audio/aac": "aac",
+  };
+  return extensions[type ?? ""] ?? "bin";
+}

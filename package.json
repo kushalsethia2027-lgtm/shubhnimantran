@@ -20,7 +20,8 @@
     "setup:supabase": "node scripts/setup-supabase.mjs",
     "build:demo": "vite build --config vite.demo.config.ts",
     "preview:demo": "vite preview --config vite.demo.config.ts --host 127.0.0.1 --port 4173",
-    "test:demo": "node tests/demo-browser.mjs"
+    "test:demo": "node tests/demo-browser.mjs",
+    "test:camera": "node tests/camera-browser.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

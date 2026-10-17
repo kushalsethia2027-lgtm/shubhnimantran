@@ -6,6 +6,9 @@ import {
   importDemoCsv,
   invalidateApprovals,
   representatives,
+  recordingContext,
+  recordingMatches,
+  recordingExtension,
 } from "../src/features/demo/model";
 describe("No-login demo actual workflow rules", () => {
   test("writes only the events assigned to this guest", () => {
@@ -78,5 +81,41 @@ describe("No-login demo actual workflow rules", () => {
     );
     expect(rows[0]!.errors).toContain("Duplicate guest and relation.");
     expect(rows[1]!.errors).toContain("Unknown or repeated event name.");
+  });
+});
+
+describe("Individual recordings", () => {
+  test("a recording never matches a different guest", () => {
+    const data = exampleData();
+    const first = data.guests[0]!;
+    const take = { guestId: first.id, context: recordingContext(data, first) };
+    expect(recordingMatches(data, first, take)).toBe(true);
+    expect(recordingMatches(data, data.guests[1]!, take)).toBe(false);
+  });
+  test("script, pronunciation and event edits require a new take", () => {
+    const data = exampleData();
+    const first = data.guests[0]!;
+    const take = { guestId: first.id, context: recordingContext(data, first) };
+    expect(recordingMatches(data, { ...first, script: "Changed spoken wording" }, take)).toBe(
+      false,
+    );
+    expect(recordingMatches(data, { ...first, phonetics: "Changed pronunciation" }, take)).toBe(
+      false,
+    );
+    expect(recordingMatches({ ...data, bride: "A different name" }, first, take)).toBe(false);
+  });
+  test("approval and design changes do not invalidate identical speech", () => {
+    const data = exampleData();
+    const first = data.guests[0]!;
+    const take = { guestId: first.id, context: recordingContext(data, first) };
+    expect(
+      recordingMatches({ ...data, template: "royal" }, { ...first, approved: true }, take),
+    ).toBe(true);
+  });
+  test("original downloads use the recorded format's extension", () => {
+    expect(recordingExtension("video/webm;codecs=vp8,opus")).toBe("webm");
+    expect(recordingExtension("audio/mp4")).toBe("m4a");
+    expect(recordingExtension("video/mp4")).toBe("mp4");
+    expect(recordingExtension("audio/ogg")).toBe("ogg");
   });
 });

@@ -21,7 +21,7 @@ npm run dev -- --host 127.0.0.1 --port 3000 --strictPort
 
 1. **Wedding:** show the editable Aarav–Meera example, dates and venues. If you change details, click **Save wedding & continue**. Changes invalidate old scripts and approvals.
 2. **Guests:** show the three example relationship groups. Add/edit/delete a guest, or preview a CSV. Phone numbers are unnecessary because there is no messaging.
-3. **Voice:** choose **Use example narration** for an immediate demonstration, or **Record my voice** / upload MP3, WAV, M4A or WebM. Preview it and check the permission box.
+3. **Record voice / video:** select a guest and read their script. Choose **Record my voice**, or **Enable camera & microphone → Start video recording**. Stop and preview the take, then confirm permission. A camera take includes your real face and voice. You can download the original recording as well as the final invitation. Repeat for each guest; takes are stored separately in this tab. Example narration remains available only as a clearly labelled fallback.
 4. **Review scripts:** click **Create personalised scripts**. Review and approve Rajesh, Sunita and Rohan individually. Their scripts mention only their selected events. Editing wording or pronunciation reopens approval.
 5. **Generate & download:** choose a recipient and a design. Click **Generate downloadable video**. Keep the tab visible for about 19 seconds with the example narration. Preview the actual output, then click **Download generated video**.
 
@@ -76,4 +76,17 @@ The built files are in `dist-demo`. The preview address is printed by Vite (norm
 
 ## Verification
 
-44 unit tests passed. The browser flow was tested with real scripts, local persistence, approval gating, real MediaRecorder encoding, download and 390px layout. Media inspection confirmed 540×960 video plus an audible audio track. The microphone path uses a synthetic test input in automated testing, not a real person's recording. No live provider or account-auth acceptance is claimed.
+48 unit tests passed. The browser flow was tested with real scripts, local persistence, approval gating, real MediaRecorder encoding, download and 390px layout. Media inspection confirmed 540×960 video plus an audible audio track. The microphone path uses a synthetic test input in automated testing, not a real person's recording. No live provider or account-auth acceptance is claimed.
+
+## Final checklist for the recorded-invitation submission
+
+- [ ] Use the latest source ZIP or redeploy the latest static ZIP; older copies do not contain camera recording.
+- [ ] Approve the three representative scripts and double-check names, relations, dates and venues.
+- [ ] Record each actual guest's spoken script separately. Choose audio-only or camera video. Switching guests never automatically carries a take over.
+- [ ] Confirm recording permission, generate the guest's invitation, preview sound/picture, and download it.
+- [ ] If wording, pronunciation or wedding details change, record a new take. Approval alone cannot update spoken words in an existing take.
+- [ ] Test camera/microphone on the laptop used for presentation. Automated checks used synthetic devices; they do not prove your hardware permissions work.
+- [ ] Download all original recordings and finished videos before refreshing or closing the tab. Media is not backed up to Supabase.
+- [ ] If a public URL is required, upload the refreshed standalone bundle to Netlify Drop and test the resulting HTTPS URL.
+
+No paid integration is needed for this recorded-audio/camera submission. Cloud media backup, live account/OTP acceptance, automated voice cloning, production queues and WhatsApp are outside this working local submission scope. See docs/IMPLEMENTATION.md for production blockers.

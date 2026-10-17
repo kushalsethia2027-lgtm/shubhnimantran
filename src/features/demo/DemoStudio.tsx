@@ -13,12 +13,29 @@ import {
   invalidateApprovals,
   representatives,
   storageKey,
+  recordingContext,
+  recordingMatches,
+  recordingExtension,
   type DemoData,
   type DemoGuest,
 } from "./model";
 import { drawInvitation, renderInvitation, type RenderResult } from "./video";
-const steps = ["Wedding", "Guests", "Voice", "Review scripts", "Generate & download"];
-type AudioChoice = { blob: Blob; name: string; source: "example" | "recorded" | "uploaded" };
+import { CameraRecorder } from "./CameraRecorder";
+const steps = [
+  "Wedding",
+  "Guests",
+  "Record voice / video",
+  "Review scripts",
+  "Generate & download",
+];
+type AudioChoice = {
+  blob: Blob;
+  name: string;
+  source: "example" | "recorded" | "uploaded";
+  kind?: "audio" | "video";
+  audioBlob?: Blob;
+};
+type GuestRecording = AudioChoice & { guestId: string; context: string; consent: boolean };
 export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   const [data, setData] = useState<DemoData>(exampleData);
   const [ready, setReady] = useState(false);
@@ -26,9 +43,9 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [selectedId, setSelectedId] = useState("mama");
-  const [audio, setAudio] = useState<AudioChoice | null>(null);
+  const [recordings, setRecordings] = useState<Record<string, GuestRecording>>({});
   const [audioUrl, setAudioUrl] = useState("");
-  const [consent, setConsent] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<RenderResult | null>(null);
@@ -44,6 +61,19 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingStart = useRef(0);
   const selected = data.guests.find((g) => g.id === selectedId) ?? data.guests[0];
+  const audio = selected ? (recordings[selected.id] ?? null) : null;
+  const consent = audio?.consent ?? false;
+  const setConsent = (value: boolean) => {
+    if (selected)
+      setRecordings((previous) => {
+        const existing = previous[selected.id];
+        return existing
+          ? { ...previous, [selected.id]: { ...existing, consent: value } }
+          : previous;
+      });
+  };
+  const mediaStale =
+    !!selected && !!audio && audio.source !== "example" && !recordingMatches(data, selected, audio);
   const samples = representatives(data.guests);
   const approvedSamples = samples.filter((g) => g.approved).length;
   useEffect(() => {
@@ -109,12 +139,30 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   );
   const update = (next: DemoData) => {
     setData(next);
+    setRecordings((previous) => {
+      const retained = Object.fromEntries(
+        Object.entries(previous).filter(([id]) => next.guests.some((g) => g.id === id)),
+      );
+      return Object.keys(retained).length === Object.keys(previous).length ? previous : retained;
+    });
     setError("");
     setNotice("");
   };
   const selectAudio = (next: AudioChoice) => {
-    setAudio(next);
-    setConsent(false);
+    if (!selected) {
+      setError("Select a guest before recording.");
+      return;
+    }
+    setRecordings((previous) => ({
+      ...previous,
+      [selected.id]: {
+        ...next,
+        kind: next.kind ?? "audio",
+        guestId: selected.id,
+        context: recordingContext(data, selected),
+        consent: false,
+      },
+    }));
     setResult(null);
     setError("");
   };
@@ -182,7 +230,9 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
   };
   const generate = async () => {
     if (!selected) return;
-    const blocked = canRender(data, selected.id, !!audio, consent);
+    const blocked = mediaStale
+      ? "This guest’s details or script changed after recording. Record or upload a new personal take before generating."
+      : canRender(data, selected.id, !!audio, consent);
     if (blocked) {
       setError(blocked);
       return;
@@ -199,7 +249,8 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
         canvas: canvas.current,
         data,
         guest: selected,
-        audio: await audio.blob.arrayBuffer(),
+        audio: await (audio.audioBlob ?? audio.blob).arrayBuffer(),
+        ...(audio.kind === "video" ? { cameraClip: audio.blob } : {}),
         signal: abort.signal,
         onProgress: setProgress,
       });
@@ -224,16 +275,17 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
     controller.current?.abort();
     stopRecording();
     setData(exampleData());
-    setAudio(null);
-    setConsent(false);
+    setRecordings({});
     setResult(null);
     setCsv([]);
     setStep(0);
     setNotice("Example wedding restored. Local recordings and generated previews cleared.");
   };
-  const blockReason = selected
-    ? canRender(data, selected.id, !!audio, consent)
-    : "Add a guest first.";
+  const blockReason = mediaStale
+    ? "This guest’s details or script changed. Re-record their personal audio/video before generating."
+    : selected
+      ? canRender(data, selected.id, !!audio, consent)
+      : "Add a guest first.";
   if (!ready)
     return (
       <div className="workspace">
@@ -727,17 +779,31 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
         {step === 2 && (
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="workspace-card workspace-form space-y-5">
-              <h2 className="text-3xl text-maroon">Your voice, exactly as recorded.</h2>
+              <h2 className="text-3xl text-maroon">A personal recording for every guest.</h2>
+              <p className="workspace-note">
+                Each guest has their own audio or camera take. Switching guests never reuses someone
+                else’s recording.{" "}
+                {
+                  Object.keys(recordings).filter((id) => data.guests.some((g) => g.id === id))
+                    .length
+                }{" "}
+                guest recordings in this tab.
+              </p>
               <p className="text-sm leading-6 text-muted-foreground">
                 Record or upload your own narration. The app embeds that actual audio in the video;
                 it does not clone your voice or make the recording speak different names.
               </p>
               <label>
                 Script to read
-                <select value={selected?.id ?? ""} onChange={(e) => setSelectedId(e.target.value)}>
+                <select
+                  disabled={recording}
+                  value={selected?.id ?? ""}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                >
                   {data.guests.map((g) => (
                     <option value={g.id} key={g.id}>
                       {g.name} · {g.relation}
+                      {recordings[g.id] ? " · recording saved in tab" : ""}
                     </option>
                   ))}
                 </select>
@@ -758,17 +824,36 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                   0:{String(seconds).padStart(2, "0")}
                 </p>
                 <p className="my-3 text-xs text-cream/70">
-                  {recording
-                    ? "Recording · auto-stops at 60s"
-                    : "Microphone is used only after you press Record"}
+                  {recorder.current?.state === "recording"
+                    ? "Recording audio · auto-stops at 60s"
+                    : recording
+                      ? "Camera is active below"
+                      : "Microphone is used only after you press Record"}
                 </p>
                 <button
                   className="workspace-secondary"
-                  onClick={() => (recording ? stopRecording() : void record())}
+                  disabled={recording && recorder.current?.state !== "recording"}
+                  onClick={() =>
+                    recorder.current?.state === "recording" ? stopRecording() : void record()
+                  }
                 >
-                  {recording ? "Stop recording" : "Record my voice"}
+                  {recorder.current?.state === "recording" ? "Stop recording" : "Record my voice"}
                 </button>
               </div>
+              <CameraRecorder
+                key={selected?.id ?? "none"}
+                disabled={recording || !selected}
+                onActivity={setRecording}
+                onError={setError}
+                onRecorded={(take) =>
+                  selectAudio({
+                    ...take,
+                    kind: "video",
+                    name: `Personal camera recording for ${selected?.name ?? "guest"}`,
+                    source: "recorded",
+                  })
+                }
+              />
               <label>
                 Or upload audio · MP3 / WAV / M4A / WebM
                 <input
@@ -826,7 +911,7 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                 </button>
               </div>
               <div className="workspace-card workspace-form space-y-4">
-                <h3 className="text-2xl">Audio preview & permission</h3>
+                <h3 className="text-2xl">Recording preview & permission</h3>
                 {audio ? (
                   <>
                     <p className="text-sm">{audio.name}</p>
@@ -836,13 +921,37 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                         : audio.source === "recorded"
                           ? "Your microphone recording"
                           : "Uploaded recording"}
+                      {audio.kind === "video" ? " · camera + voice" : ""}
                     </span>
-                    <audio
-                      controls
-                      className="w-full"
-                      src={audioUrl}
-                      aria-label="Selected narration preview"
-                    />
+                    {audio.kind === "video" ? (
+                      <video
+                        controls
+                        playsInline
+                        className="aspect-video w-full rounded-xl bg-black"
+                        src={audioUrl}
+                        aria-label="Personal camera recording preview"
+                      />
+                    ) : (
+                      <audio
+                        controls
+                        className="w-full"
+                        src={audioUrl}
+                        aria-label="Selected narration preview"
+                      />
+                    )}
+                    <a
+                      className="workspace-secondary"
+                      href={audioUrl}
+                      download={`Nimantran-original-${selected?.name.replace(/[^\p{L}\p{N}_-]/gu, "-") ?? "guest"}.${recordingExtension(audio.blob.type)}`}
+                    >
+                      Download this guest’s original recording
+                    </a>
+                    {mediaStale && (
+                      <p role="alert" className="text-sm text-destructive">
+                        The script or guest details changed after this take. Record a new take to
+                        match them.
+                      </p>
+                    )}
                     <label className="check">
                       <input
                         type="checkbox"
@@ -852,28 +961,33 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
                           setResult(null);
                         }}
                       />
-                      I have permission to use this audio in this invitation. I understand it is
-                      embedded unchanged, without voice cloning.
+                      I have permission to use this audio/video in this invitation. I understand it
+                      is embedded unchanged, without voice cloning.
                     </label>
                     <button
                       className="workspace-secondary"
                       onClick={() => {
-                        setAudio(null);
-                        setConsent(false);
+                        if (selected)
+                          setRecordings((previous) => {
+                            const next = { ...previous };
+                            delete next[selected.id];
+                            return next;
+                          });
                         setResult(null);
                       }}
                     >
-                      Remove audio & revoke local permission
+                      Remove this guest’s recording & revoke permission
                     </button>
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No audio selected. Record, upload, or choose the labelled example.
+                    No recording for this guest. Record audio/video, upload audio, or choose the
+                    labelled example.
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Audio stays in this tab’s memory. Nothing is uploaded to Supabase or an AI
-                  provider. Refreshing removes it.
+                  Guest audio/video recordings stay in this tab’s memory. Nothing is uploaded to
+                  Supabase or an AI provider. Refreshing removes it.
                 </p>
               </div>
               <button className="workspace-primary" disabled={recording} onClick={() => setStep(3)}>
