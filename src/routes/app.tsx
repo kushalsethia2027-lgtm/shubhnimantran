@@ -203,6 +203,13 @@ function Application() {
                 Create your wedding, welcome your guests, and review every personal invitation
                 before it leaves your family.
               </p>
+              <a href="/demo" className="workspace-primary w-full">
+                Try without sign-in · generate & download a video
+              </a>
+              <p className="text-xs text-muted-foreground">
+                Local demo with clearly labelled example data. No email code, API key or WhatsApp
+                required.
+              </p>
               <div className="space-y-4 border-t pt-5">
                 {[
                   "Private wedding and guest details",

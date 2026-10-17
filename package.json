@@ -17,7 +17,10 @@
     "build:node": "NITRO_PRESET=node-server vite build",
     "start": "node .output/server/index.mjs",
     "check:supabase": "bun run scripts/check-supabase.ts",
-    "setup:supabase": "node scripts/setup-supabase.mjs"
+    "setup:supabase": "node scripts/setup-supabase.mjs",
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "preview:demo": "vite preview --config vite.demo.config.ts --host 127.0.0.1 --port 4173",
+    "test:demo": "node tests/demo-browser.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

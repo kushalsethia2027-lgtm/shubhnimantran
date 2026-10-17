@@ -37,3 +37,6 @@ dist-ssr
 !.env.example
 test-results/
 playwright-report/
+
+# Standalone demo build
+dist-demo/

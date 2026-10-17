@@ -2,6 +2,12 @@
 
 This is a persistent core application under development, **not a launch-ready end-to-end video delivery product**. Do not enable generation/sending merely by adding keys.
 
+## New no-login submission workflow
+
+`/demo` is a real browser-local application with example metadata, editable wedding/guests/CSV import, actual recording/upload, explicit local audio permission, deterministic personalised text, three-group sample approval, live canvas design and genuine browser-rendered video download. It does not call the cloud backend or providers. MP4/WebM selection follows browser encoding support. Audio is embedded unchanged; cloning and automatic spoken name replacement remain unavailable. Local draft persistence is explicitly distinguished from Supabase persistence. See SUBMISSION.md for the tested standalone deployment build and remaining production requirements.
+
+The following account/cloud limitations still apply to `/app` and the production pipeline, not to the implemented local demo download workflow.
+
 ## Delivered
 
 - Existing landing page, visual identity and bundled video with native controls retained. Unsupported language/watch/turnaround marketing claims corrected. No checkout or paid add-ons.

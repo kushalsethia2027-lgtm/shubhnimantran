@@ -1,5 +1,7 @@
 # Open Nimantran on a Windows laptop
 
+**For the submission, open `http://127.0.0.1:3000/demo` after starting the app. It needs no sign-in, email, keys or database. See [SUBMISSION.md](SUBMISSION.md) for the walkthrough and real video download.**
+
 1. Install **Node.js 24 LTS** from https://nodejs.org/ with the default options.
 2. On this GitHub branch, select **Code → Download ZIP**. Extract the ZIP using **Extract All**.
 3. Open the extracted project folder. The correct folder contains `package.json`, `src` and `README.md`.

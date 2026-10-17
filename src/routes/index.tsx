@@ -233,11 +233,19 @@ function Landing() {
               their relation to you, and your family's blessings, in your language, on WhatsApp.
             </p>
             <p className="mx-auto mt-4 max-w-xl text-xs text-champagne/80">
-              Early access: wedding planning and script review are in development. Personalised
-              video generation and WhatsApp delivery are not yet available.
+              Try browser-local video creation and direct download today. AI voice cloning and cloud
+              batch production remain unavailable. No WhatsApp setup is needed for the demo.
             </p>
             <div className="mt-7">
-              <GoldButton onClick={scrollToForm}>Join the waitlist</GoldButton>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href="/demo"
+                  className="foil-fill inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-semibold text-maroon"
+                >
+                  Try demo · download your video
+                </a>
+                <GoldButton onClick={scrollToForm}>Join the waitlist</GoldButton>
+              </div>
               <p className="mt-3 text-xs tracking-wide text-champagne/70">
                 First 100 families get 30% off.
               </p>

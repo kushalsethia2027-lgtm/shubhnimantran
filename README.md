@@ -4,6 +4,12 @@ Every invitation carries your family's voice.
 
 This TanStack Start/React/TypeScript application preserves the existing Lovable landing page and adds a private wedding studio. It includes database-backed wedding/guest/script/consent workflows and explicitly unavailable external-production screens. **It is not launch ready:** voice verification, rendered samples, batch workers and WhatsApp sending still require implementation and provider acceptance. See [implementation status and blockers](docs/IMPLEMENTATION.md).
 
+## No-login submission path
+
+**Open `/demo` to use the new browser-local wedding invitation studio without sign-in or API keys.** It supports wedding/guest editing, CSV preview, permissioned voice recording/upload, editable local Hindi/Hinglish scripts, representative approvals, real browser video encoding, preview and direct download. Example data/audio is explicitly labelled; no voice cloning or external messaging is simulated.
+
+For the deadline, follow [SUBMISSION.md](SUBMISSION.md). It includes Windows instructions, the presentation walkthrough, exact voice requirements and optional static-site deployment. `npm run build:demo` produces a standalone static build in `dist-demo`; no server or database is needed after hosting those files over HTTPS. A ready-to-upload ZIP and a real generated example are in `submission/`.
+
 ## Local development
 
 Requires Node.js 22.12+ (tested with Node 24.19), Bun 1.3.14, and optionally Docker for database integration tests.
