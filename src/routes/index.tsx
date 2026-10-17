@@ -1,15 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  Divider,
-  Diya,
-  Jaali,
-  Mandala,
-  Paisley,
-  Reveal,
-  Toran,
-} from "@/components/ornaments";
+import { Divider, Diya, Jaali, Mandala, Paisley, Reveal, Toran } from "@/components/ornaments";
 import { InvitePlayer } from "@/components/InvitePlayer";
+import { WaitlistForm } from "@/features/workspace/WaitlistForm";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -133,7 +126,7 @@ const steps = [
   },
   {
     t: "Send",
-    d: "We create a personal video for every guest and send it on WhatsApp. You track who has watched.",
+    d: "Review your samples, approve production, then confirm WhatsApp delivery. Available tracking is shown separately.",
   },
 ];
 
@@ -153,18 +146,18 @@ const samples = [
   {
     name: "Chacha ji",
     rel: "Father's brother",
-    lang: "Punjabi-style Hinglish",
-    line: "Chacha ji, sade ghar di khushi tuhade bina adhoori hai. Zaroor aana.",
+    lang: "Hinglish",
+    line: "Chacha ji, aapke bina hamare ghar ki khushi adhoori hai. Zaroor aaiyega.",
   },
 ];
 
 const features = [
   ["Sounds like your family", "Your own voice, not a template."],
   ["Right respect, right relation", "The correct salutation for every single guest."],
-  ["Your language", "Hindi, Punjabi, Gujarati, Marathi, Tamil and more."],
+  ["Your language", "Host-reviewed Hindi and Hinglish scripts."],
   [
     "Your voice, your control",
-    "A voice is used only with the speaker's consent, and deleted after the wedding on request.",
+    "Consent is required. Request deletion of recordings and associated voice assets at any time.",
   ],
 ];
 
@@ -181,15 +174,15 @@ const faqs = [
   ],
   [
     "How long does it take?",
-    "Most families get their full set of videos within 48 hours of sharing the recording and guest list.",
+    "Our target is up to 200 invitations within 24 hours after approval, subject to provider capacity. We show actual progress; turnaround is not guaranteed.",
   ],
   [
     "How do guests receive it?",
-    "On WhatsApp, as a video message from your family. No app, no link to install.",
+    "Through an approved WhatsApp Business message with a secure invitation watch link. No app to install.",
   ],
   [
     "Which languages do you support?",
-    "Hindi, Hinglish, Punjabi, Gujarati, Marathi, Tamil, Telugu, Bengali and more on request.",
+    "Hindi and Hinglish are supported for host-reviewed scripts. Other languages require native-speaker validation before launch.",
   ],
   [
     "What if a guest's relation is unusual?",
@@ -199,8 +192,6 @@ const faqs = [
 
 function Landing() {
   const [open, setOpen] = useState<number | null>(0);
-  const [form, setForm] = useState({ name: "", phone: "", date: "" });
-  const [sent, setSent] = useState(false);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-cream text-ink">
@@ -211,12 +202,17 @@ function Landing() {
             <p className="foil font-display text-2xl leading-none font-semibold">Nimantran</p>
             <p className="deva text-[11px] text-maroon/70">निमंत्रण</p>
           </div>
-          <button
-            onClick={scrollToForm}
-            className="shrink-0 rounded-full border border-gold bg-maroon px-4 py-2.5 text-xs font-semibold tracking-wide text-champagne transition hover:shadow-[0_0_18px_-2px_var(--gold)]"
-          >
-            Join waitlist
-          </button>
+          <div className="flex items-center gap-3">
+            <a href="/app" className="text-xs font-semibold text-maroon underline">
+              Sign in
+            </a>
+            <button
+              onClick={scrollToForm}
+              className="shrink-0 rounded-full border border-gold bg-maroon px-4 py-2.5 text-xs font-semibold tracking-wide text-champagne transition hover:shadow-[0_0_18px_-2px_var(--gold)]"
+            >
+              Join waitlist
+            </button>
+          </div>
         </div>
       </header>
 
@@ -229,12 +225,16 @@ function Landing() {
           <Reveal>
             <p className="label-xs text-champagne/70">Personal video wedding invitations</p>
             <h1 className="mx-auto mt-4 max-w-3xl font-display text-[2.6rem] leading-[1.05] font-semibold text-cream sm:text-6xl">
-              Every guest gets a <em className="foil not-italic italic">personal</em> invitation from
-              you. Even the <em className="foil not-italic italic">300th</em>.
+              Every guest gets a <em className="foil not-italic italic">personal</em> invitation
+              from you. Even the <em className="foil not-italic italic">300th</em>.
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-cream/80">
-              Record once. Nimantran sends each guest a video that says their name, their relation to
-              you, and your family's blessings, in your language, on WhatsApp.
+              Record once. Nimantran is being built to send each guest a video that says their name,
+              their relation to you, and your family's blessings, in your language, on WhatsApp.
+            </p>
+            <p className="mx-auto mt-4 max-w-xl text-xs text-champagne/80">
+              Early access: wedding planning and script review are in development. Personalised
+              video generation and WhatsApp delivery are not yet available.
             </p>
             <div className="mt-7">
               <GoldButton onClick={scrollToForm}>Join the waitlist</GoldButton>
@@ -372,14 +372,10 @@ function Landing() {
                     Most popular
                   </span>
                 )}
-                <p
-                  className={`font-display text-2xl ${p.pop ? "text-champagne" : "text-maroon"}`}
-                >
+                <p className={`font-display text-2xl ${p.pop ? "text-champagne" : "text-maroon"}`}>
                   {p.name}
                 </p>
-                <p
-                  className={`mt-3 font-display text-4xl ${p.pop ? "foil" : "text-maroon"}`}
-                >
+                <p className={`mt-3 font-display text-4xl ${p.pop ? "foil" : "text-maroon"}`}>
                   {p.price}
                 </p>
                 <p className={`mt-2 text-sm ${p.pop ? "text-cream/80" : "text-muted-foreground"}`}>
@@ -393,7 +389,8 @@ function Landing() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-md px-5 text-center text-sm text-cream/80">
-          Optional add-ons: RSVP tracking (₹499), pre-wedding reminder video (₹999).
+          Guest categories only. Payment collection and paid add-ons are unavailable in this
+          release.
         </p>
         <p className="mx-auto mt-2 max-w-md px-5 text-center text-xs text-champagne/70">
           Founding families get 30% off. Prices are indicative until launch.
@@ -438,45 +435,7 @@ function Landing() {
           <p className="mt-3 text-sm text-cream/80">
             First 100 families get 30% off. We will message you on WhatsApp when we open.
           </p>
-          {sent ? (
-            <div className="card-ornate mt-8 p-8">
-              <p className="font-display text-2xl text-maroon">Dhanyavaad, {form.name || "ji"}!</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                You're on the list. We'll reach out on WhatsApp soon.
-              </p>
-            </div>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSent(true);
-              }}
-              className="card-ornate mt-8 space-y-3 p-6 text-left"
-            >
-              <input
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Your name"
-                className="min-h-12 w-full rounded-full border border-gold/60 bg-cream px-5 text-sm outline-none focus:ring-2 focus:ring-gold"
-              />
-              <input
-                required
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="WhatsApp number"
-                className="min-h-12 w-full rounded-full border border-gold/60 bg-cream px-5 text-sm outline-none focus:ring-2 focus:ring-gold"
-              />
-              <input
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                placeholder="Wedding month (optional)"
-                className="min-h-12 w-full rounded-full border border-gold/60 bg-cream px-5 text-sm outline-none focus:ring-2 focus:ring-gold"
-              />
-              <GoldButton className="w-full">Join the waitlist</GoldButton>
-            </form>
-          )}
+          <WaitlistForm />
         </div>
       </section>
 

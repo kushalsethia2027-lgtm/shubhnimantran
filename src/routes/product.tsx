@@ -8,7 +8,7 @@ export const Route = createFileRoute("/product")({
       {
         name: "description",
         content:
-          "Record once with consent, upload your guest list, preview samples, and send personal WhatsApp invitations with a watched tracker.",
+          "Record once with consent, upload your guest list, preview samples, and approve personal invitations before production or delivery.",
       },
       { property: "og:title", content: "How Nimantran works" },
       {
@@ -29,7 +29,15 @@ const steps = [
     title: "Record",
     body: "A 30–60 second message, with consent from the speaker.",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        aria-hidden
+      >
         <rect x="9" y="3" width="6" height="11" rx="3" />
         <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" />
       </svg>
@@ -40,7 +48,15 @@ const steps = [
     title: "Guest list",
     body: "Upload with relation, language and events.",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        aria-hidden
+      >
         <path d="M8 6h13M8 12h13M8 18h13" />
         <circle cx="3.5" cy="6" r="1" fill="currentColor" />
         <circle cx="3.5" cy="12" r="1" fill="currentColor" />
@@ -51,9 +67,17 @@ const steps = [
   {
     n: "3",
     title: "Preview",
-    body: "Check 3 samples and fix pronunciations.",
+    body: "Review 3 representative scripts. Audio/video previews are not yet available.",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        aria-hidden
+      >
         <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
         <circle cx="12" cy="12" r="2.5" />
       </svg>
@@ -62,9 +86,18 @@ const steps = [
   {
     n: "4",
     title: "Send and track",
-    body: "WhatsApp delivery with a watched tracker.",
+    body: "Planned official WhatsApp delivery after explicit host confirmation. Currently unavailable.",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
         <path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z" />
       </svg>
     ),
@@ -84,11 +117,19 @@ const roadmap = [
   },
   {
     label: "Next",
-    items: ["Delivery and watched tracker", "Regional dialect packs", "RSVP with reminders"],
+    items: [
+      "Verified delivery callbacks",
+      "Native-speaker language validation",
+      "RSVP with reminders",
+    ],
   },
   {
     label: "Later",
-    items: ["Multi-event invites", "Family co-editing", "Printed QR add-on"],
+    items: [
+      "Team-assisted secure review",
+      "Family co-editing",
+      "Privacy-respecting watch analytics",
+    ],
   },
 ];
 
@@ -108,6 +149,10 @@ function ProductPage() {
             “When I can’t personally invite hundreds of guests, I want every guest, especially the
             elders, to feel personally invited, so nobody feels disrespected.”
           </blockquote>
+          <p className="mx-auto mt-6 max-w-xl text-sm text-cream/80">
+            Early-access roadmap. Recording, guest management and wording review are implemented for
+            a configured account; personalised media production and delivery are not yet available.
+          </p>
           <Divider className="mt-10" />
         </div>
       </section>
@@ -115,7 +160,9 @@ function ProductPage() {
       {/* Four steps */}
       <section className="px-5 py-16">
         <Reveal>
-          <h2 className="text-center font-display text-3xl text-maroon">Four steps, one personal invitation</h2>
+          <h2 className="text-center font-display text-3xl text-maroon">
+            Four steps, one personal invitation
+          </h2>
         </Reveal>
         <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-4">
           {steps.map((s, i) => (
@@ -163,7 +210,7 @@ function ProductPage() {
       <section className="bg-maroon px-5 py-10 text-center">
         <p className="mx-auto max-w-2xl font-display text-lg text-champagne sm:text-xl">
           Your family’s voice is used only with the speaker’s consent, only for your invitations,
-          and deleted after the wedding on request.
+          and you can request deletion of recordings and associated voice assets.
         </p>
       </section>
 
