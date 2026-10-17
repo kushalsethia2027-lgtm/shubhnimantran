@@ -10,6 +10,13 @@ for attempt in $(seq 1 30); do
  if docker exec "$name" pg_isready -U postgres >/dev/null 2>&1; then break; fi
  sleep 1
 done
-for file in tests/db-bootstrap.sql supabase/migrations/*.sql tests/database.sql; do
+files=(tests/db-bootstrap.sql)
+if [[ "${1:-}" == "--setup" ]]; then
+ files+=(supabase/setup.sql)
+else
+ files+=(supabase/migrations/*.sql)
+fi
+files+=(tests/database.sql)
+for file in "${files[@]}"; do
  docker exec -i "$name" psql -U postgres -v ON_ERROR_STOP=1 < "$file"
 done

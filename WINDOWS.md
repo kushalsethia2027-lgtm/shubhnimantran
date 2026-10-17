@@ -30,6 +30,24 @@ If port 3000 is already in use, stop an older development server with Ctrl+C, or
 
 ## Database features
 
-The pages can be viewed without Supabase. Sign-in and persistence require the server variables and migrations documented in README.md. Copy `.env.example` to `.env` only if you are ready to configure the connection. Never commit `.env` or share its contents in chat.
+The pages can be viewed without Supabase. Sign-in and persistence require the server variables and migrations documented in README.md. The project URL is prefilled for `ozvuruhglhyhuparvael.supabase.co`. Run this in the app's Command Prompt:
+
+```cmd
+npm run setup:supabase
+```
+
+Copy the **legacy anon key** and **legacy service_role key** from your Supabase project's **Settings → API Keys → Legacy API Keys**, and paste them into the corresponding hidden prompts. Pasted characters do not appear; press Enter after each. The command saves `.env` locally without displaying keys. It does not apply migrations or prove that credentials work.
+
+Next, for a **new/empty Nimantran project**, copy the database setup SQL to your Windows clipboard:
+
+```cmd
+type supabase\setup.sql | clip
+```
+
+Open https://supabase.com/dashboard/project/ozvuruhglhyhuparvael/sql/new, paste with Ctrl+V, and click **Run**. This single transaction contains all three migrations. Use it **instead of** applying those files separately. Inspect existing tables before running it; do not drop existing data to fix a conflict. Stop at the first error and share only the error, never keys.
+
+Before signing in, set the Supabase Auth **Site URL** to `http://127.0.0.1:3000`. In **Authentication → Email Templates**, include `<p>Your sign-in code: {{ .Token }}</p>` in both **Confirm signup** and **Magic Link** templates. Keep any required existing template content. Supabase test-email restrictions may require custom SMTP. Finally restart the development server.
+
+Never commit `.env` or share its contents in chat.
 
 This is an application foundation, not a completed launch: personalised media generation and WhatsApp delivery remain unavailable. Installing a ChatGPT Supabase plugin does not automatically supply credentials to an app running on your laptop. See docs/IMPLEMENTATION.md for the actual feature status.

@@ -16,7 +16,8 @@
     "test:browser": "node tests/browser.mjs",
     "build:node": "NITRO_PRESET=node-server vite build",
     "start": "node .output/server/index.mjs",
-    "check:supabase": "bun run scripts/check-supabase.ts"
+    "check:supabase": "bun run scripts/check-supabase.ts",
+    "setup:supabase": "node scripts/setup-supabase.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

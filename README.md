@@ -37,9 +37,11 @@ supabase db push
 
 Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `APP_ORIGIN` in `.env` or server environment settings. Never prefix secrets with `VITE_`. The service-role key is used only on the server for waitlist allocation, shared rate limiting and private storage/deletion; private application reads/writes use the user's JWT and RLS.
 
-Enable email authentication, configure production SMTP, and change the Supabase email OTP template to display `{{ .Token }}` (the app accepts a numeric code, not a magic-link callback). Set the Auth site URL to your exact application origin. Keep OTP expiries short and configure Supabase's own Auth rate limits. Restart the app after environment changes.
+Enable email authentication, configure production SMTP, and change both the **Confirm signup** and **Magic Link** email templates to display `{{ .Token }}` (the app accepts a numeric code, not a magic-link callback). Set the Auth site URL to your exact application origin. Keep OTP expiries short and configure Supabase's own Auth rate limits. Restart the app after environment changes.
 
 After setting the server variables, run `npm run check:supabase` (Bun required). This read-only preflight checks Auth reachability, required tables, service-role access and private bucket configuration without printing keys or records. It does not apply migrations or prove email delivery.
+
+For a fresh/empty project, `supabase/setup.sql` is a single-transaction alternative containing all three migrations. Use it instead of applying the migration files individually, never both. Windows users can run `type supabase\setup.sql | clip`, then paste the SQL into the Supabase SQL Editor.
 
 Migrations create private `voices` and `invitations` buckets. Hosts have no direct storage policies; server endpoints verify wedding ownership before upload, signing or deletion. Existing buckets must remain private and match the documented MIME/size restrictions. Never make these buckets public to fix an access error.
 
