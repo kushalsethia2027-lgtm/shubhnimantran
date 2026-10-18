@@ -1,3 +1,4 @@
+import { captureWalkthrough, walkthroughViewport } from "./walkthrough-capture.mjs";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 const browser = await chromium.launch({
@@ -7,7 +8,7 @@ const browser = await chromium.launch({
 });
 try {
   const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
+    viewport: walkthroughViewport,
     acceptDownloads: true,
     reducedMotion: "reduce",
   });
@@ -24,6 +25,11 @@ try {
       (process.env.TEST_DEMO_PATH ?? "/demo"),
   );
   await page.getByRole("heading", { name: "An invitation worth keeping." }).waitFor();
+  await captureWalkthrough(
+    page,
+    "01-wedding",
+    page.getByRole("heading", { name: "Your celebration", exact: true }),
+  );
   const step = async (index) =>
     page.getByRole("navigation", { name: "Demo steps" }).getByRole("button").nth(index).click();
   await step(4);
@@ -63,6 +69,11 @@ try {
   await page
     .getByRole("heading", { name: "Your generated invitation", exact: true })
     .waitFor({ timeout: 65000 });
+  await captureWalkthrough(
+    page,
+    "03-download",
+    page.getByRole("heading", { name: "Your generated invitation", exact: true }),
+  );
   const metadata = await page
     .locator('video[aria-label="Generated personal invitation video"]')
     .evaluate(async (video) => {
@@ -93,7 +104,9 @@ try {
   await step(2);
   await page
     .getByRole("textbox", { name: "Invitation wording for Rajesh", exact: true })
-    .fill("New wording needs review");
+    .fill(
+      "Namaste Rajesh Mama ji! Meera aur Aarav ki shaadi mein aapka dil se swagat hai. Zaroor aaiyega!",
+    );
   await step(4);
   assert.equal(
     await page
@@ -116,6 +129,11 @@ try {
   const permission = page.getByRole("checkbox", { name: /I have permission to use this audio/ });
   assert.equal(await permission.isChecked(), false);
   await permission.check();
+  await captureWalkthrough(
+    page,
+    "02-record",
+    page.getByRole("combobox", { name: "Script to read", exact: true }),
+  );
   await step(4);
   await page.getByRole("button", { name: "Generate downloadable video", exact: true }).click();
   await page.getByRole("button", { name: "Cancel rendering", exact: true }).click();

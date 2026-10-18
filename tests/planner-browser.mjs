@@ -1,3 +1,4 @@
+import { captureWalkthrough, walkthroughViewport } from "./walkthrough-capture.mjs";
 // Browser wiring tests against an in-process API fixture, NOT a hosted Supabase acceptance test.
 // PostgreSQL/RLS enforcement is tested separately by tests/planner-database.sql.
 import { chromium } from "@playwright/test";
@@ -75,7 +76,7 @@ const session = (role) => ({
 });
 async function setup(role) {
   const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
+    viewport: walkthroughViewport,
     acceptDownloads: true,
   });
   const page = await context.newPage();
@@ -192,6 +193,11 @@ try {
   await bride
     .getByText("Invited 1 · Confirmed 1 · Declined 0 · Pending 0", { exact: true })
     .waitFor();
+  await captureWalkthrough(
+    bride,
+    "04-families",
+    bride.getByRole("heading", { name: "Bride household", exact: true }),
+  );
   // Two separate travel groups for one family.
   for (const mode of ["train", "flight"]) {
     await bride.getByRole("button", { name: "Families", exact: true }).click();
@@ -218,6 +224,11 @@ try {
     .getByRole("heading", { name: "Bride household · train", exact: true })
     .first()
     .waitFor();
+  await captureWalkthrough(
+    groom,
+    "05-arrivals",
+    groom.getByRole("heading", { name: "Bride household · train", exact: true }).first(),
+  );
   await groom.getByLabel("Transport mode", { exact: true }).selectOption("flight");
   assert.equal(
     await groom.getByRole("heading", { name: "Bride household · train", exact: true }).count(),
@@ -244,6 +255,11 @@ try {
   await bride.getByLabel("Rooms", { exact: true }).fill("2");
   await bride.getByRole("button", { name: "Save assignment", exact: true }).click();
   await bride.getByText("Family Hotel", { exact: false }).waitFor();
+  await captureWalkthrough(
+    bride,
+    "06-logistics",
+    bride.getByText("Family Hotel", { exact: false }),
+  );
   await bride.getByRole("button", { name: "Overview", exact: true }).click();
   const metric = (label) =>
     bride.locator("section > div").filter({ has: bride.getByText(label, { exact: true }) });

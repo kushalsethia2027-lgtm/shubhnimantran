@@ -50,15 +50,35 @@ try {
     .getByText("Family guest house · 4 rooms", { exact: true })
     .waitFor();
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.getByText("Illustrative sample data.", { exact: false }).waitFor();
-  const video = page.getByLabel("Aarav and Meera wedding invitation sample video with sound");
-  assert.equal(await video.getAttribute("controls"), "");
-  await video.scrollIntoViewIfNeeded();
-  await video.evaluate(async (element) => {
-    await element.play();
-    element.pause();
+  await page
+    .locator("#guest-travel-planner")
+    .getByText("Illustrative sample data.", { exact: false })
+    .waitFor();
+  const tour = page.getByLabel(
+    "Nimantran product walkthrough: invitations, guests and travel planning",
+    { exact: true },
+  );
+  assert.notEqual(await tour.getAttribute("src"), await hero.getAttribute("src"));
+  assert.equal(await tour.getAttribute("controls"), "");
+  await page.getByRole("button", { name: "0:28 Arrivals", exact: false }).click();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('video[aria-label^="Nimantran product walkthrough"]');
+    return v && v.currentTime >= 28 && v.currentTime < 32 && !v.paused;
   });
-  assert.ok((await video.getAttribute("src")).endsWith(".mp4"));
+  const tourMetadata = await tour.evaluate((v) => ({
+    duration: v.duration,
+    error: v.error?.message,
+    audio: v.webkitAudioDecodedByteCount,
+  }));
+  assert.ok(tourMetadata.duration >= 41.9 && tourMetadata.duration < 43);
+  assert.equal(tourMetadata.error, undefined);
+  await tour.evaluate((v) => v.pause());
+  await page.getByRole("button", { name: "0:00 Wedding details", exact: false }).click();
+  await page.waitForFunction(
+    () =>
+      document.querySelector('video[aria-label^="Nimantran product walkthrough"]').currentTime < 3,
+  );
+  await tour.evaluate((v) => v.pause());
   assert.equal(
     await page.getByRole("button", { name: "Join the waitlist", exact: true }).last().isEnabled(),
     true,

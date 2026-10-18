@@ -1,3 +1,4 @@
+import { ProductWalkthrough } from "@/components/ProductWalkthrough";
 import { PlannerPreview } from "./PlannerPreview";
 import { useState } from "react";
 import { Divider, Diya, Jaali, Mandala, Paisley, Reveal, Toran } from "@/components/ornaments";
@@ -288,13 +289,14 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
       <section className="relative overflow-hidden bg-peacock px-5 py-20">
         <Jaali className="pointer-events-none absolute inset-0 h-full w-full text-champagne/10" />
         <div className="relative mx-auto max-w-4xl text-center">
-          <p className="label-xs text-champagne/70">Hear how it sounds</p>
+          <p className="label-xs text-champagne/70">See Nimantran in action</p>
           <h2 className="mt-3 font-display text-4xl text-cream">
-            Written the way your family <em className="foil not-italic italic">speaks</em>
+            From a personal invitation to a{" "}
+            <em className="foil not-italic italic">thoughtful welcome</em>
           </h2>
         </div>
         <Reveal className="relative mt-10">
-          <InvitePlayer />
+          <ProductWalkthrough />
         </Reveal>
         <div className="relative mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
           {samples.map((s, i) => (
