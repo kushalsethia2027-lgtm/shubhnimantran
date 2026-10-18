@@ -1,3 +1,4 @@
+import { PlannerPreview } from "./PlannerPreview";
 import { useState } from "react";
 import { Divider, Diya, Jaali, Mandala, Paisley, Reveal, Toran } from "@/components/ornaments";
 import { InvitePlayer } from "@/components/InvitePlayer";
@@ -224,6 +225,12 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
                 >
                   Try demo · download your video
                 </a>
+                <a
+                  href="#guest-travel-planner"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-gold/70 px-6 text-sm font-semibold text-champagne"
+                >
+                  Explore Guest & Travel Planner
+                </a>
                 <GoldButton onClick={scrollToForm}>Join the waitlist</GoldButton>
               </div>
               <p className="mt-3 text-xs tracking-wide text-champagne/70">
@@ -236,6 +243,8 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
           </Reveal>
         </div>
       </section>
+
+      <PlannerPreview />
 
       {/* Problem */}
       <section className="relative -mt-6 rounded-t-[2.5rem] bg-cream px-5 pb-16 pt-14">

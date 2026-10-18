@@ -1,6 +1,8 @@
 # Guest & Travel Planner
 
-This extends the existing Nimantran React / TanStack Start application. The landing page, `/product`, `/app` invitation accounts and `/demo` video studio remain in place. `/planner/` is a separate authenticated module, included in both the normal build and the existing static Netlify build (`npm run build:demo`, publish `dist-demo`). It uses the official `@supabase/supabase-js` client against the **same Supabase project**. It does not use the old server-only API or require a service-role key. The existing invitation-account cookies and planner browser sessions are separate sign-in sessions; the underlying Supabase user accounts are the same.
+**Current sign-in:** Google replaces the manual email/password forms. Complete [Google OAuth setup](GOOGLE-SIGN-IN.md), including the `/auth/` redirect URL. No SMTP is needed for Google sign-in.
+
+This extends the existing Nimantran React / TanStack Start application. The landing page, `/product`, `/app` invitation accounts and `/demo` video studio remain in place. `/planner/` is a separate authenticated module, included in both the normal build and the existing static Netlify build (`npm run build:demo`, publish `dist-demo`). It uses the official `@supabase/supabase-js` client against the **same Supabase project**. It does not use the old server-only API or require a service-role key. Google uses one Supabase browser session for planner and video pages; the full server-backed invitation app bridges it to its existing HttpOnly cookies.
 
 ## Connect the backend
 
@@ -14,22 +16,18 @@ This extends the existing Nimantran React / TanStack Start application. The land
 
    Use the publishable key from Supabase → Project Settings → API Keys, or its legacy **anon** JWT. Both are public browser credentials; RLS enforces access. Never use a secret key or service-role JWT in any `VITE_` variable. Both build configurations reject a secret/service-role value in the planner public-key setting before bundling; test keys are covered by `tests/planner-env.test.ts`. Existing server-only environment variables are unchanged. No real credentials belong in Git or chat.
 
-3. Supabase → Authentication → Providers: enable Email and email confirmation. In URL Configuration, set your deployed Site URL and allow **exact** redirect URLs:
-   - `https://ni-man-tran.app/planner/`
-   - Your actual Netlify preview domain followed by `/planner/`, if used.
-   - `http://127.0.0.1:3000/planner/` for the normal local app.
-   - `http://127.0.0.1:4173/planner/` for static preview, if used.
-4. Retain Supabase's standard confirmation and password-recovery link templates for this module (links use `{{ .ConfirmationURL }}`). If an earlier OTP customization removed that link, add it back alongside `{{ .Token }}` to support both flows. The planner uses individual email/password accounts, with PKCE confirmation/recovery redirects. Open confirmation/reset links in the same browser that requested them. Signup might not issue a session until email is confirmed. Email restrictions and rate limits still apply: this module cannot bypass Supabase/Gmail delivery configuration or quotas. Never disable RLS to address an authentication error.
+3. Enable Google in Supabase Authentication using the [Google setup guide](GOOGLE-SIGN-IN.md). Put the Google client ID/secret in Supabase only, never in frontend variables.
+4. In Supabase URL Configuration, allow `https://ni-man-tran.app/auth/` and each exact local/preview `/auth/` callback URL you use. Configure the Google OAuth client’s redirect URI to the Supabase `/auth/v1/callback` URL, as documented in the guide. No SMTP or email code setup is needed for Google.
 5. Rebuild/redeploy after changing `VITE_*`. Keep Netlify branch `nimantran-mvp`, build `npm run build:demo`, publish `dist-demo`. No DNS changes are required. Local development: `npm install`, then `npm run dev -- --host 127.0.0.1 --port 3000 --strictPort`.
 6. Open `/planner/`. Missing public configuration shows a setup screen, not simulated records. Missing tables/RPCs produce a migration instruction. A configured URL alone does not establish that Auth/database connectivity works.
 
 ## First workspace and separate planners
 
-1. The owner creates their own Supabase account, confirms their email and signs in. Existing invitation users can use that same account/password; requesting a password reset is available if they previously used OTP only.
+1. The owner clicks Sign in with Google and chooses their own account. Use the same verified Google email as your existing invitation account to retain its associated workspaces.
 2. Existing invitation weddings are available to their owners after the migration. New invitation weddings receive an owner membership through a trigger. Alternatively, click **New wedding workspace** and enter name/date/venue. This creates an existing-schema wedding and its owner membership; no existing wedding is overwritten.
 3. Settings → **Invite a planner**: enter the recipient's exact email and choose `bride_planner` or `groom_planner`. The database verifies the current actor is the owner. Copy the private one-use link shown once, and send it directly to the intended person yourself. The app does not send invitation emails or messages.
-4. The recipient opens that link, creates/confirms their own account if necessary and signs in. After a confirmation redirect, reopen the original invitation link if the invitation prompt is gone. Accept using the exact **verified email** the owner invited. The database checks email, expiry and prior acceptance, then writes membership. No shared passwords or editable user-metadata roles are used. Add the other side the same way. The owner may also manage either side.
-5. Tokens contain 244 random bits, expire in seven days, are stored only as SHA-256 hashes, and are delivered in the URL fragment (not sent as a server path/query). The fragment is removed from history immediately. Pending tokens live only in component memory. Accepted/expired/revoked links cannot grant membership. Do not publish these private membership invitations; they are not public guest-data links.
+4. The recipient opens that link and signs in with Google using the exact invited email. The invitation is preserved through the Google redirect; reopen the original link if needed. Accept using the exact **verified email** the owner invited. The database checks email, expiry and prior acceptance, then writes membership. No shared passwords or editable user-metadata roles are used. Add the other side the same way. The owner may also manage either side.
+5. Tokens contain 244 random bits, expire in seven days, are stored only as SHA-256 hashes, and are delivered in the URL fragment (not sent as a server path/query). The fragment is removed from history immediately. Pending tokens are kept in tab sessionStorage during Google OAuth and cleared on acceptance or dismissal. Accepted/expired/revoked links cannot grant membership. Do not publish these private membership invitations; they are not public guest-data links.
 6. Settings lists account IDs and roles. Only the owner can revoke pending invitations or remove non-owner membership. To change a planner role, remove their old membership and issue a new invitation. Ownership transfer is deliberately unavailable. There is no invitation/role claim based on user-provided metadata.
 
 ## Data and access

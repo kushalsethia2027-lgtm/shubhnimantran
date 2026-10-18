@@ -156,3 +156,63 @@ describe("Supabase authentication error classification", () => {
     );
   });
 });
+
+describe("Google session bridge", () => {
+  test("rejects cross-site sign-in before exchanging any token", async () => {
+    let calls = 0;
+    globalThis.fetch = mock(async () => {
+      calls++;
+      return new Response("{}");
+    });
+    const response = await handleApi(
+      req("/auth/google-session", { refresh_token: "fixture" }, "https://attacker.test"),
+    );
+    expect(response.status).toBe(403);
+    expect(calls).toBe(0);
+  });
+  test("rejects an invalid refresh token without issuing cookies", async () => {
+    process.env.SUPABASE_URL = "https://fixture.supabase.co";
+    process.env.SUPABASE_ANON_KEY = "fixture-public";
+    globalThis.fetch = mock(
+      async () =>
+        new Response(JSON.stringify({ code: "refresh_token_not_found" }), { status: 400 }),
+    );
+    const response = await handleApi(
+      req("/auth/google-session", { refresh_token: "invalid-fixture" }),
+    );
+    expect(response.status).not.toBe(200);
+    expect(response.headers.get("set-cookie")).toBe(null);
+  });
+  test("verifies the exchanged session and issues server-derived cookies only", async () => {
+    process.env.SUPABASE_URL = "https://fixture.supabase.co";
+    process.env.SUPABASE_ANON_KEY = "fixture-public";
+    const paths: string[] = [];
+    globalThis.fetch = mock(async (input) => {
+      paths.push(String(input));
+      return new Response(
+        JSON.stringify(
+          String(input).includes("/auth/v1/user")
+            ? { id: "verified-user" }
+            : {
+                access_token: "verified-access",
+                refresh_token: "rotated-refresh",
+                expires_in: 3600,
+              },
+        ),
+        { status: 200 },
+      );
+    });
+    const response = await handleApi(
+      req("/auth/google-session", {
+        refresh_token: "fixture-refresh",
+        user: { role: "owner" },
+        expires_in: 999999,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(paths.some((p) => p.endsWith("/auth/v1/user"))).toBe(true);
+    expect(response.headers.get("set-cookie")).toContain("HttpOnly");
+    expect(response.headers.get("set-cookie")).toContain("verified-access");
+    expect((await response.json()).session.refresh_token).toBe("rotated-refresh");
+  });
+});

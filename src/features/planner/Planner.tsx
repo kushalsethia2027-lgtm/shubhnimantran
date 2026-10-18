@@ -1,3 +1,4 @@
+import { pendingInviteKey } from "../auth/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -61,7 +62,6 @@ export function Planner() {
   const [problem] = useState(configurationProblem);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [recovery, setRecovery] = useState(false);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [wid, setWid] = useState("");
   const [data, setData] = useState<Snapshot>(emptySnapshot);
@@ -86,9 +86,10 @@ export function Planner() {
   useEffect(() => {
     if (problem) return;
     const params = new URLSearchParams(window.location.hash.slice(1));
-    const token = params.get("invite");
+    const token = params.get("invite") ?? sessionStorage.getItem(pendingInviteKey);
     if (token) {
       setInviteToken(token);
+      sessionStorage.setItem(pendingInviteKey, token);
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     const client = plannerClient();
@@ -99,11 +100,10 @@ export function Planner() {
       setUser(data.session?.user ?? null);
       setAuthReady(true);
     });
-    const { data: subscription } = client.auth.onAuthStateChange((event, session) => {
+    const { data: subscription } = client.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
       setUser(session?.user ?? null);
       setAuthReady(true);
-      if (event === "PASSWORD_RECOVERY") setRecovery(true);
     });
     return () => {
       active = false;
@@ -322,7 +322,6 @@ export function Planner() {
                       async () => {
                         const { error } = await plannerClient().auth.signOut();
                         if (error) throw error;
-                        setRecovery(false);
                       },
                       "Signed out.",
                       false,
@@ -343,13 +342,13 @@ export function Planner() {
           <p role="status" className="workspace-card">
             Checking sign-in…
           </p>
-        ) : !user || recovery ? (
+        ) : !user ? (
           <>
-            <AuthPanel recovery={recovery} onRecovered={() => setRecovery(false)} />
+            <AuthPanel />
             {inviteToken && (
               <p className="workspace-note mx-auto max-w-lg">
-                An invitation is ready. Sign in with the invited email to accept it. After
-                confirming a new account by email, reopen your original invitation link.
+                An invitation is ready. Choose the Google account whose email matches the invitation
+                to accept it.
               </p>
             )}
           </>
@@ -394,13 +393,20 @@ export function Planner() {
                           token: inviteToken,
                         });
                         setInviteToken("");
+                        sessionStorage.removeItem(pendingInviteKey);
                         changeWorkspace(id);
                       }, "Invitation accepted by the database. Refreshing your wedding…")
                     }
                   >
                     Accept planner invitation
                   </button>
-                  <button className="workspace-secondary" onClick={() => setInviteToken("")}>
+                  <button
+                    className="workspace-secondary"
+                    onClick={() => {
+                      setInviteToken("");
+                      sessionStorage.removeItem(pendingInviteKey);
+                    }}
+                  >
                     Dismiss invitation
                   </button>
                 </div>

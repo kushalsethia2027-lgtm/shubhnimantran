@@ -1,3 +1,4 @@
+import { VideoAccount } from "../auth/VideoAccount";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Download, Flower2, Mic, Play, ShieldCheck, Upload } from "lucide-react";
 import exampleAudio from "@/assets/demo-narration.mp3";
@@ -335,6 +336,7 @@ export function DemoStudio({ standalone = false }: { standalone?: boolean }) {
           stay in memory until downloaded; refreshing clears them. No AI voice cloning, cloud saving
           or WhatsApp sending is performed.
         </div>
+        <VideoAccount hasRecordings={Object.keys(recordings).length > 0} />
         <nav className="workspace-nav mb-6 border-y" aria-label="Demo steps">
           {steps.map((name, i) => (
             <button

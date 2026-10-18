@@ -1,3 +1,5 @@
+import { configurationProblem, plannerClient } from "@/features/planner/backend";
+import { GoogleSignIn } from "@/features/auth/GoogleSignIn";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -152,6 +154,8 @@ function Application() {
                 onClick={async () => {
                   try {
                     await api("/auth/logout", "POST");
+                    if (!configurationProblem())
+                      await plannerClient().auth.signOut({ scope: "local" });
                     setUser(null);
                     setData(null);
                     setWeddings([]);
@@ -347,101 +351,27 @@ function SignIn({
   available: boolean;
   onSignedIn: () => Promise<void>;
 }) {
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   return (
-    <form
-      className="workspace-card workspace-form space-y-5"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        setBusy(true);
-        setError("");
-        try {
-          if (sent) {
-            await api("/auth/verify", "POST", { email, code });
-            await onSignedIn();
-          } else {
-            await api("/auth/request", "POST", { email });
-            setSent(true);
-          }
-        } catch (ex) {
-          setError((ex as Error).message);
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
+    <section className="workspace-card space-y-5">
       <h2 className="text-3xl text-maroon">Your wedding, safely saved.</h2>
       <p className="text-sm text-muted-foreground">
-        Sign in or create an account with an email code. No password to remember.
+        Sign in with your Google account. Use the same account for invitations and your shared Guest
+        & Travel Planner.
       </p>
+      <GoogleSignIn destination="/app" disabled={!available} />
       {!available && (
         <p role="status" className="workspace-note">
-          Development mode · Account and database access are unavailable until the project owner
-          configures Supabase and applies the migrations. No demo account or simulated saves are
-          provided.
+          The account-backed invitation studio needs its server configuration. You can still create
+          and download a video in the no-sign-in studio.
         </p>
-      )}
-      <label>
-        Email address
-        <input
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          disabled={sent || !available}
-          onChange={(e) => setEmail(e.target.value)}
-          maxLength={200}
-        />
-      </label>
-      {sent && (
-        <label>
-          Code from your email
-          <input
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
-            pattern="[0-9]{6,10}"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-        </label>
-      )}
-      {sent && (
-        <p role="status" className="text-sm">
-          Check your email for the code. It expires according to your project’s Auth settings.
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      <button className="workspace-primary w-full" disabled={busy || !available}>
-        {busy ? "Please wait…" : sent ? "Verify & enter studio" : "Email me a sign-in code"}
-      </button>
-      {sent && (
-        <button
-          className="workspace-secondary w-full"
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            setSent(false);
-            setCode("");
-          }}
-        >
-          Change email / request another code
-        </button>
       )}
       <p className="text-xs text-muted-foreground">
-        Your sign-in session is held in secure, HttpOnly cookies. Never share your code.
+        Account-based invitation access uses secure HttpOnly cookies after Google verification.
       </p>
-    </form>
+    </section>
   );
 }
+
 function Dashboard({ data, navigate }: { data: Workspace; navigate: (tab: string) => void }) {
   const approved = data.scripts.filter((s) => s.approved_at).length;
   const steps = [

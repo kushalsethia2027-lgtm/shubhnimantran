@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as ProductRouteImport } from './routes/product'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -44,6 +50,7 @@ const ProductRoute = ProductRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/planner': typeof PlannerRoute
   '/product': typeof ProductRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/planner': typeof PlannerRoute
   '/product': typeof ProductRoute
@@ -59,21 +67,23 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/demo': typeof DemoRoute
   '/planner': typeof PlannerRoute
   '/product': typeof ProductRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/demo' | '/planner' | '/product'
+  fullPaths: '/' | '/app' | '/auth' | '/demo' | '/planner' | '/product'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/demo' | '/planner' | '/product'
-  id: '__root__' | '/' | '/app' | '/demo' | '/planner' | '/product'
+  to: '/' | '/app' | '/auth' | '/demo' | '/planner' | '/product'
+  id: '__root__' | '/' | '/app' | '/auth' | '/demo' | '/planner' | '/product'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRoute
+  AuthRoute: typeof AuthRoute
   DemoRoute: typeof DemoRoute
   PlannerRoute: typeof PlannerRoute
   ProductRoute: typeof ProductRoute
@@ -93,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -122,6 +139,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRoute,
+  AuthRoute: AuthRoute,
   DemoRoute: DemoRoute,
   PlannerRoute: PlannerRoute,
   ProductRoute: ProductRoute,

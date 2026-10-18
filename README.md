@@ -105,3 +105,5 @@ See [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for exact delivered scope, 
 ## Guest & Travel Planner
 
 The additive `/planner/` module supports separate authenticated family planners, shared travel/logistics and Supabase persistence. See [setup, schema, permissions and acceptance checks](docs/GUEST-TRAVEL-PLANNER.md). Public browser environment values and the new migration are required; until configured, the module shows setup instructions. Existing invitation flows remain available.
+
+Google replaces manual sign-in forms; enable the provider using the [Google sign-in setup guide](docs/GOOGLE-SIGN-IN.md). The homepage includes an interactive, labelled preview of the Guest & Travel Planner.

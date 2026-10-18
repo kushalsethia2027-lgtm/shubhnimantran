@@ -18,6 +18,18 @@ try {
     "Questions families ask",
   ])
     assert.equal(await page.getByRole("heading", { name, exact: true }).count(), 1);
+  await page
+    .getByRole("heading", { name: "Two families. One beautiful plan.", exact: false })
+    .waitFor();
+  await page.getByRole("tab", { name: "Arrivals", exact: true }).click();
+  await page.getByRole("tabpanel").getByText("Pickup needed", { exact: true }).waitFor();
+  await page.getByRole("tab", { name: "Logistics", exact: true }).click();
+  await page
+    .getByRole("tabpanel")
+    .getByText("Family guest house · 4 rooms", { exact: true })
+    .waitFor();
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await page.getByText("Illustrative sample data.", { exact: false }).waitFor();
   const video = page.getByLabel("Aarav and Meera wedding invitation sample video with sound");
   assert.equal(await video.getAttribute("controls"), "");
   await video.scrollIntoViewIfNeeded();

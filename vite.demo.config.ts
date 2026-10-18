@@ -19,6 +19,7 @@ export default defineConfig({
         home: resolve(import.meta.dirname, "demo-site/index.html"),
         demo: resolve(import.meta.dirname, "demo-site/demo/index.html"),
         product: resolve(import.meta.dirname, "demo-site/product/index.html"),
+        auth: resolve(import.meta.dirname, "demo-site/auth/index.html"),
         planner: resolve(import.meta.dirname, "demo-site/planner/index.html"),
       },
     },

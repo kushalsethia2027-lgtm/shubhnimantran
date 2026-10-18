@@ -149,10 +149,12 @@ async function setup(role) {
     }
     return respond({ message: "Unhandled fixture request" }, 400);
   });
+  // Authenticated fixture session only; real OAuth wiring has its own browser test.
+  await context.addInitScript(
+    (value) => sessionStorage.setItem("nimantran-planner-auth", JSON.stringify(value)),
+    session(role),
+  );
   await page.goto(base + "/planner/");
-  await page.getByLabel("Email", { exact: true }).fill(users[role].email);
-  await page.getByLabel("Password", { exact: true }).fill("fixture-password-only");
-  await page.getByRole("button", { name: "Sign in securely", exact: true }).click();
   await page
     .getByRole("heading", { name: "Two families. One celebration.", exact: true })
     .waitFor();

@@ -63,6 +63,26 @@ export async function handleApi(request: Request): Promise<Response> {
     }
     if (path.join("/") === "status" && method === "GET") return reply(capabilities());
     if (path[0] === "auth") {
+      if (path[1] === "google-session" && method === "POST") {
+        const { refresh_token } = z
+          .object({ refresh_token: z.string().min(1).max(8192) })
+          .parse(await body(request));
+        // Exchange with Supabase; never accept a client-supplied identity or expiry.
+        const result = await supa<{
+          access_token: string;
+          refresh_token: string;
+          expires_in: number;
+        }>("/auth/v1/token?grant_type=refresh_token", undefined, "POST", { refresh_token });
+        await supa("/auth/v1/user", result.access_token);
+        return reply(
+          {
+            ok: true,
+            session: { access_token: result.access_token, refresh_token: result.refresh_token },
+          },
+          200,
+          authCookies(request, result.access_token, result.refresh_token, result.expires_in),
+        );
+      }
       if (path[1] === "request" && method === "POST") {
         const { email } = z
           .object({ email: z.string().trim().email().max(200) })
