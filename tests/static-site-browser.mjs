@@ -12,6 +12,27 @@ try {
   const base = process.env.TEST_BASE_URL ?? "http://127.0.0.1:4173";
   await page.goto(base + "/");
   await page.getByRole("heading", { name: /Every guest gets a personal invitation/ }).waitFor();
+  const hero = page.getByLabel("Homepage invitation video with sound", { exact: true });
+  await hero.scrollIntoViewIfNeeded();
+  assert.equal(await hero.getAttribute("controls"), "");
+  assert.equal(await page.getByText("0:42", { exact: true }).count(), 0);
+  // Use a real user gesture; the native player must advance and include sound.
+  await hero.click();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('video[aria-label="Homepage invitation video with sound"]');
+    return v && v.currentTime > 0.3 && !v.paused && !v.muted;
+  });
+  const heroMetadata = await hero.evaluate((v) => ({
+    duration: v.duration,
+    error: v.error?.message,
+    width: v.videoWidth,
+    audio: v.webkitAudioDecodedByteCount,
+  }));
+  assert.ok(heroMetadata.duration >= 18 && heroMetadata.duration <= 20);
+  assert.ok(heroMetadata.width > 0);
+  assert.equal(heroMetadata.error, undefined);
+  if (typeof heroMetadata.audio === "number") assert.ok(heroMetadata.audio > 0);
+  await hero.evaluate((v) => v.pause());
   for (const name of [
     "Three steps, one recording",
     "Choose your parivaar",

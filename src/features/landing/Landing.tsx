@@ -49,31 +49,24 @@ function scrollToForm() {
   document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function PhoneMock() {
+function HeroInvitation() {
   return (
     <div className="relative mx-auto w-[248px] sm:w-[280px]">
       <div className="absolute -inset-8 rounded-full bg-marigold/20 blur-3xl" aria-hidden />
-      <div className="animate-floaty relative">
+      <div className="relative">
         <div className="arch border border-gold/70 bg-gradient-to-b from-champagne/25 to-transparent p-2.5">
           <div className="arch overflow-hidden bg-[#0b1410] p-3">
             <div className="flex items-center gap-2 pb-3">
               <span className="h-6 w-6 rounded-full bg-gold/70" />
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-cream">Priya · Wedding</p>
-                <p className="text-[10px] text-cream/50">online</p>
+                <p className="truncate text-xs font-medium text-cream">Aarav & Meera · Wedding</p>
+                <p className="text-[10px] text-cream/50">Sample invitation · play with sound</p>
               </div>
             </div>
             <div className="rounded-xl rounded-tl-sm bg-[#14241c] p-2">
-              <div className="relative grid h-32 place-items-center rounded-lg bg-gradient-to-br from-burgundy to-maroon">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-champagne/90">
-                  <span className="ml-1 block h-0 w-0 border-y-[7px] border-l-[11px] border-y-transparent border-l-maroon" />
-                </span>
-                <span className="absolute bottom-1.5 right-2 rounded bg-black/45 px-1.5 py-0.5 text-[10px] text-cream">
-                  0:42
-                </span>
-              </div>
+              <InvitePlayer label="Homepage invitation video with sound" showCaption={false} />
               <p className="pt-2 text-[11px] leading-snug text-cream/90">
-                Sharma Uncle, aapke liye ek khaas nimantran
+                Aarav aur Meera ki shaadi ka nimantran
               </p>
             </div>
             <div className="h-6" />
@@ -239,7 +232,7 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
             </div>
           </Reveal>
           <Reveal delay={150} className="mt-12">
-            <PhoneMock />
+            <HeroInvitation />
           </Reveal>
         </div>
       </section>
