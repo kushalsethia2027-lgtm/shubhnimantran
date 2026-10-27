@@ -347,7 +347,7 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
         <Toran className="h-12 w-full text-gold" />
         <div className="mx-auto max-w-5xl px-5 pt-8 text-center">
           <p className="label-xs text-champagne/70">Pricing</p>
-          <h2 className="mt-3 font-display text-4xl text-cream">Choose your parivaar</h2>
+          <h2 className="mt-3 font-display text-4xl text-cream">Video invitation packages</h2>
         </div>
         <div className="mx-auto mt-10 grid max-w-4xl gap-5 px-5 sm:grid-cols-3">
           {plans.map((p, i) => (
@@ -361,7 +361,7 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
               >
                 {p.pop && (
                   <span className="foil-fill absolute left-1/2 top-3 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-semibold tracking-wide text-maroon">
-                    Most popular
+                    150-guest package
                   </span>
                 )}
                 <p className={`font-display text-2xl ${p.pop ? "text-champagne" : "text-maroon"}`}>
@@ -380,12 +380,26 @@ export function Landing({ standalone = false }: { standalone?: boolean }) {
             </Reveal>
           ))}
         </div>
-        <p className="mx-auto mt-8 max-w-md px-5 text-center text-sm text-cream/80">
-          Guest categories only. Payment collection and paid add-ons are unavailable in this
-          release.
-        </p>
-        <p className="mx-auto mt-2 max-w-md px-5 text-center text-xs text-champagne/70">
-          Founding families get 30% off. Prices are indicative until launch.
+        <div className="mx-auto mt-8 max-w-4xl px-5">
+          <div className="rounded-2xl border border-gold/60 bg-cream p-7 text-center">
+            <p className="label-xs text-maroon">Purchased separately</p>
+            <h3 className="mt-2 font-display text-3xl text-maroon">Guest &amp; Travel Planner</h3>
+            <p className="mt-3 font-display text-4xl text-maroon">₹1,999</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              One wedding workspace for family guest records, arrivals, pickups and accommodation
+              planning.
+            </p>
+            <a
+              href="/planner/"
+              className="mt-5 inline-flex min-h-12 items-center rounded-full border border-maroon px-7 text-sm font-semibold text-maroon"
+            >
+              Explore the planner
+            </a>
+          </div>
+        </div>
+        <p className="mx-auto mt-8 max-w-xl px-5 text-center text-sm text-cream/80">
+          Prices are per wedding. Video packages and the Guest &amp; Travel Planner are separate
+          purchases. Payments are not enabled yet. Exploring the app does not charge you.
         </p>
       </section>
 
