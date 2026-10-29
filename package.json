@@ -24,7 +24,9 @@
     "test:camera": "node tests/camera-browser.mjs",
     "test:planner": "node tests/planner-browser.mjs",
     "test:site": "node tests/static-site-browser.mjs",
-    "test:google": "node tests/google-browser.mjs"
+    "test:google": "node tests/google-browser.mjs",
+    "test:social": "node tests/social-browser.mjs",
+    "test:social:db": "bash scripts/test-social-database.sh"
   },
   "overrides": {
     "rolldown": "1.2.1"

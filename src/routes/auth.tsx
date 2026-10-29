@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GoogleCallback } from "@/features/auth/GoogleCallback";
+import { SocialApp } from "@/features/social/SocialApp";
 export const Route = createFileRoute("/auth")({
-  component: GoogleCallback,
+  component: SocialApp,
   head: () => ({
     meta: [
       { title: "Sign in · Nimantran" },

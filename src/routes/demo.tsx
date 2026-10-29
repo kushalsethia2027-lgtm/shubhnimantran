@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DemoStudio } from "@/features/demo/DemoStudio";
+import { SocialApp } from "@/features/social/SocialApp";
 export const Route = createFileRoute("/demo")({
   head: () => ({
     meta: [
-      { title: "Try Nimantran · No-login invitation studio" },
-      { name: "robots", content: "noindex,nofollow" },
+      { title: "Nimantran — Find your scene. Gurgaon first." },
+      {
+        name: "description",
+        content:
+          "Discover hosted adult gatherings in Gurgaon. Board games, supper clubs, music and new connections. Find your scene or host your own.",
+      },
     ],
   }),
-  component: DemoStudio,
+  component: SocialApp,
 });

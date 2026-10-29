@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { GoogleCallback } from "../../src/features/auth/GoogleCallback";
+import { SocialApp } from "../../src/features/social/SocialApp";
 import "../../src/styles.css";
 const root = document.getElementById("root");
-if (!root) throw new Error("Missing app root");
-createRoot(root).render(<GoogleCallback />);
+if (!root) throw Error("Missing app root");
+createRoot(root).render(<SocialApp />);

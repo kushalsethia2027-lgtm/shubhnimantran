@@ -2,3 +2,6 @@
 /product /product/ 301
 /planner /planner/ 301
 /auth /auth/ 301
+
+/app / 301
+/app/ / 301

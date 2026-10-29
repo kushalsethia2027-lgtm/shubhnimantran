@@ -1,4 +1,6 @@
-# Dodo Payments setup for Nimantran
+# Historical wedding-software payment plan
+
+> Archived on 29 October 2026. Nimantran is now a social-events marketplace. The prices and product instructions below apply to the retired wedding app. See [SOCIAL-EVENTS.md](SOCIAL-EVENTS.md) for the new product and marketplace payment requirements. No existing software-product approval establishes approval for event ticketing or host payouts.
 
 ## Approved prices
 

@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Planner } from "@/features/planner/Planner";
+import { SocialApp } from "@/features/social/SocialApp";
 export const Route = createFileRoute("/planner")({
   head: () => ({
     meta: [
-      { title: "Guest & Travel Planner · Nimantran" },
-      { name: "robots", content: "noindex,nofollow" },
-      { name: "referrer", content: "no-referrer" },
+      { title: "Nimantran — Find your scene. Gurgaon first." },
+      {
+        name: "description",
+        content:
+          "Discover hosted adult gatherings in Gurgaon. Board games, supper clubs, music and new connections. Find your scene or host your own.",
+      },
     ],
   }),
-  component: Planner,
+  component: SocialApp,
 });

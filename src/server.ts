@@ -48,8 +48,10 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       if (new URL(request.url).pathname.startsWith("/api/nimantran/")) {
-        const { handleApi } = await import("./lib/server/api.server");
-        return handleApi(request);
+        return Response.json(
+          { error: "The wedding product has been retired. Visit the new Nimantran events app." },
+          { status: 410 },
+        );
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

@@ -9,4 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep the homepage sample as a bundled MP4 with embedded audio and native video controls, so playback does not depend on browser speech voices.
+- The founder explicitly replaced the wedding product with the Gurgaon-first adults-only social events app on 29 October 2026. Keep legacy database records intact; the public wedding routes and API are retired. Never present sample events, payment states, referral credit or host reviews as real activity.

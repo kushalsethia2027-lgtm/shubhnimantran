@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { ProductPage } from "../../src/features/landing/ProductPage";
+import { SocialApp } from "../../src/features/social/SocialApp";
 import "../../src/styles.css";
 const root = document.getElementById("root");
-if (!root) throw new Error("The app root is missing.");
-createRoot(root).render(<ProductPage />);
+if (!root) throw Error("Missing app root");
+createRoot(root).render(<SocialApp />);
