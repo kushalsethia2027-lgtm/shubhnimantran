@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Nimantran" },
       {
         name: "description",
-        content: "Hosted social gatherings for adults. Gurgaon first. Find your scene.",
+        content: "Hosted social gatherings for adults. Delhi NCR. Find your scene.",
       },
       { property: "og:title", content: "Nimantran" },
       {
         property: "og:description",
-        content: "Hosted social gatherings for adults. Gurgaon first. Find your scene.",
+        content: "Hosted social gatherings for adults. Delhi NCR. Find your scene.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

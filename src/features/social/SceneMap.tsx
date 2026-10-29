@@ -27,8 +27,8 @@ export function SceneMap({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 700, h: 550 });
-  const [center, setCenter] = useState({ lat: 28.465, lng: 77.08 });
-  const [zoom, setZoom] = useState(13);
+  const [center, setCenter] = useState({ lat: 28.57, lng: 77.15 });
+  const [zoom, setZoom] = useState(11);
   const [failed, setFailed] = useState(false);
   const drag = useRef<{ x: number; y: number; cx: number; cy: number } | null>(null);
   useEffect(() => {
@@ -41,7 +41,10 @@ export function SceneMap({
     return () => r.disconnect();
   }, []);
   useEffect(() => {
-    if (place) setCenter(place);
+    if (place) {
+      setCenter(place);
+      setZoom(13);
+    }
   }, [place]);
   const p = project(center.lat, center.lng, zoom);
   const left = p.x - size.w / 2,
@@ -54,7 +57,7 @@ export function SceneMap({
     <div
       className="scene-map"
       ref={ref}
-      aria-label="Event map of Gurgaon. Pins show approximate neighbourhoods."
+      aria-label="Event map of Delhi NCR. Pins show approximate neighbourhoods."
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button,a")) return;
         drag.current = { x: e.clientX, y: e.clientY, cx: p.x, cy: p.y };
@@ -132,7 +135,7 @@ export function SceneMap({
         );
       })}
       <div className="map-note">
-        <span className="live-dot" /> Gurgaon first · approximate locations
+        <span className="live-dot" /> Delhi NCR · approximate locations
       </div>
       <div className="map-controls">
         <button
@@ -151,10 +154,10 @@ export function SceneMap({
         </button>
         <button
           type="button"
-          aria-label="Return map to Gurgaon"
+          aria-label="Show Delhi NCR"
           onClick={() => {
-            setCenter({ lat: 28.465, lng: 77.08 });
-            setZoom(13);
+            setCenter({ lat: 28.57, lng: 77.15 });
+            setZoom(11);
           }}
         >
           <LocateFixed size={18} />

@@ -124,141 +124,6 @@ export const when = (value: string) =>
     minute: "2-digit",
     timeZone: "Asia/Kolkata",
   }).format(new Date(value));
-function future(day: number, hour: number) {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + day);
-  d.setUTCHours(hour - 5, 30, 0, 0);
-  return d.toISOString();
-}
-export const sampleScenes: Scene[] = [
-  [
-    "a",
-    "Bollywood, but make it karaoke.",
-    "dance",
-    "Cyber Hub",
-    699,
-    24,
-    19,
-    "Riya",
-    "High energy",
-    28.495,
-    77.089,
-    "A host-led singalong for people who know every chorus. Expect friendly introductions, team songs and a very enthusiastic finale.",
-  ],
-  [
-    "b",
-    "Your move. New friends.",
-    "games",
-    "Sector 29",
-    499,
-    16,
-    8,
-    "Kabir",
-    "Playful",
-    28.468,
-    77.062,
-    "Discover a new board game with a welcoming table. The host explains the rules and helps everyone find their first game. Beginners very welcome.",
-  ],
-  [
-    "c",
-    "Good food. Better company.",
-    "food",
-    "Golf Course Road",
-    899,
-    12,
-    6,
-    "Meera",
-    "Conversational",
-    28.449,
-    77.103,
-    "A relaxed supper-club concept with shared dishes and conversation prompts. Come curious, hungry and ready to meet someone new.",
-  ],
-  [
-    "d",
-    "A little colour outside the lines.",
-    "art",
-    "DLF Phase 4",
-    799,
-    14,
-    7,
-    "Aarav",
-    "Relaxed",
-    28.462,
-    77.084,
-    "An easy afternoon of painting and conversation. Follow a guided exercise, then make something of your own. All skill levels welcome.",
-  ],
-  [
-    "e",
-    "A Sunday worth stepping out for.",
-    "outdoors",
-    "Aravalli Biodiversity Park",
-    0,
-    20,
-    11,
-    "Sana",
-    "Relaxed",
-    28.481,
-    77.115,
-    "An easy daytime walking-social concept. Meet at a public starting point, walk at a conversational pace and take a break together.",
-  ],
-  [
-    "f",
-    "New in town? Hello ji.",
-    "social",
-    "Sushant Lok",
-    399,
-    18,
-    9,
-    "Dev",
-    "Conversational",
-    28.458,
-    77.075,
-    "A small hosted social for people finding their feet in the city. Light introductions and conversation games help everyone join in.",
-  ],
-].map((r, i) => ({
-  id: `sample-${r[0]}`,
-  host_id: `sample-host-${i}`,
-  title: r[1] as string,
-  category: r[2] as Category,
-  neighbourhood: r[3] as string,
-  price: r[4] as number,
-  capacity: r[5] as number,
-  confirmed_count: r[6] as number,
-  host_name: r[7] as string,
-  atmosphere: r[8] as string,
-  lat: r[9] as number,
-  lng: r[10] as number,
-  description: r[11] as string,
-  city: "Gurgaon",
-  starts_at: future(i + 2, 18),
-  ends_at: future(i + 2, 21),
-  min_age: 18,
-  max_age: null,
-  food: i === 2 ? "Shared vegetarian dinner" : i === 4 ? "Not included" : "Light vegetarian snacks",
-  drinks: i === 4 ? "Bring your own water" : "One soft drink and drinking water",
-  includes:
-    i === 3
-      ? "Basic painting materials"
-      : i === 1
-        ? "Hosted games and equipment"
-        : "Hosted introductions and activity",
-  extra_costs: "Personal purchases are extra",
-  bring:
-    i === 4 ? "Water, comfortable shoes and sun protection" : "Yourself and a little curiosity",
-  rules: "Adults 18+ only. Respect personal boundaries. Ask before taking photos.",
-  cancellation:
-    "Example policy: cancellation at least 48 hours before the event. Real hosts must publish their own clear terms.",
-  accessibility: "Example only; check the actual venue with the host",
-  language: "English & Hindi",
-  solo: true,
-  alcohol_free: true,
-  status: "published",
-  revision: 1,
-  host_events: 0,
-  rating: null,
-  review_count: 0,
-  sample: true,
-}));
 export function filterScenes(
   scenes: Scene[],
   f: {
@@ -271,13 +136,41 @@ export function filterScenes(
     vibe: string;
     solo: boolean;
     sober: boolean;
+    period?: string;
+    language?: string;
+    openOnly?: boolean;
+    minRating?: number;
+    sort?: string;
+    time?: string;
   },
 ) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  return scenes.filter((e) => {
+  const todayMs = Date.parse(today + "T00:00:00Z");
+  const todayDow = new Date(todayMs).getUTCDay();
+  const saturday =
+    todayDow === 0 ? todayMs - 86400000 : todayMs + ((6 - todayDow + 7) % 7) * 86400000;
+  const filtered = scenes.filter((e) => {
     const age = Number(f.age);
     const day = new Date(e.starts_at).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const dayMs = Date.parse(day + "T00:00:00Z");
+    const hour = Number(
+      new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        hourCycle: "h23",
+        timeZone: "Asia/Kolkata",
+      }).format(new Date(e.starts_at)),
+    );
     return (
+      (!f.openOnly || (e.confirmed_count < e.capacity && new Date(e.starts_at) > new Date())) &&
+      (!f.language || e.language.toLowerCase().includes(f.language.toLowerCase())) &&
+      (!f.minRating || (e.rating !== null && e.rating >= f.minRating)) &&
+      (!f.period ||
+        (f.period === "today"
+          ? day === today
+          : f.period === "weekend"
+            ? dayMs >= saturday && dayMs <= saturday + 86400000
+            : dayMs - todayMs < 7 * 86400000)) &&
+      (!f.time || (f.time === "day" ? hour >= 6 && hour < 18 : hour >= 18 || hour < 6)) &&
       e.status === "published" &&
       (!f.search ||
         `${e.title} ${e.neighbourhood} ${e.description} ${e.host_name}`
@@ -294,4 +187,13 @@ export function filterScenes(
       (!f.sober || e.alcohol_free)
     );
   });
+  return filtered.sort((a, b) =>
+    f.sort === "price"
+      ? a.price - b.price
+      : f.sort === "popular"
+        ? b.confirmed_count - a.confirmed_count
+        : f.sort === "rating"
+          ? (b.rating ?? 0) - (a.rating ?? 0)
+          : new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
 }

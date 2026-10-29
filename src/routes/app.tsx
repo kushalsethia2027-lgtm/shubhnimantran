@@ -3,7 +3,7 @@ import { SocialApp } from "@/features/social/SocialApp";
 export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
-      { title: "Nimantran — Find your scene. Gurgaon first." },
+      { title: "Nimantran — Find your scene. Delhi NCR." },
       {
         name: "description",
         content:

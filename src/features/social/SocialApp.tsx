@@ -35,7 +35,6 @@ import {
   categoryFor,
   filterScenes,
   inr,
-  sampleScenes,
   when,
   type Scene,
   type Booking,
@@ -43,6 +42,7 @@ import {
 } from "./domain";
 import * as api from "./backend";
 import { CategoryIcon } from "./CategoryIcon";
+import { eventTimes } from "./auth-config";
 import { SceneMap } from "./SceneMap";
 import { Ticket as Invitation } from "./Ticket";
 import "./social.css";
@@ -51,13 +51,19 @@ type Profile = { display_name: string; bio: string };
 const initialFilters = {
   search: "",
   category: "",
-  area: "Gurgaon",
+  area: "",
   price: 50000,
   age: "",
   date: "",
   vibe: "",
   solo: false,
   sober: false,
+  period: "",
+  language: "",
+  openOnly: false,
+  minRating: 0,
+  sort: "soonest",
+  time: "",
 };
 function Modal({
   title,
@@ -101,31 +107,25 @@ function Modal({
     </dialog>
   );
 }
+function CategoryArt({ category, className = "" }: { category: string; className?: string }) {
+  const c = categoryFor(category);
+  return (
+    <div
+      role="img"
+      aria-label={`${c.name}: Bollywood-inspired category artwork, not an event photograph`}
+      className={`category-art ${c.id} ${className}`}
+    />
+  );
+}
 function SceneArt({ event }: { event: Scene }) {
   const c = categoryFor(event.category);
   return (
-    <div className={`scene-art ${event.category}`}>
-      <div className="art-orbit" />
-      <span className="art-kicker">{c.sub}</span>
-      <span className="art-symbol">
-        <CategoryIcon category={c.id} />
-      </span>
-      <span className="art-word">
-        {event.category === "dance"
-          ? "AAJ KI\nMEHFIL."
-          : event.category === "games"
-            ? "GAME\nON, JI."
-            : event.category === "food"
-              ? "AAIYE,\nBAITHIYE."
-              : event.category === "art"
-                ? "THODA\nRANG HO."
-                : event.category === "outdoors"
-                  ? "BAHAR\nNIKLO."
-                  : "HELLO,\nNEW YOU."}
-      </span>
-      <span className="art-stamp">
-        {event.solo ? "COME SOLO. LEAVE WITH A STORY." : "GOOD PEOPLE. GOOD PLANS."}
-      </span>
+    <div className={`scene-art photo-art ${c.id}`}>
+      <CategoryArt category={c.id} />
+      <div className="poster-caption">
+        <span>{c.sub}</span>
+        <strong>{c.ticket}</strong>
+      </div>
     </div>
   );
 }
@@ -136,7 +136,6 @@ export function SocialApp() {
   const [map, setMap] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [example, setExample] = useState(false);
   const [loading, setLoading] = useState(true);
   const [problem, setProblem] = useState("");
   const [notice, setNotice] = useState("");
@@ -170,11 +169,7 @@ export function SocialApp() {
     return () => clearTimeout(timer);
   }, [notice, selected, manage, ticket, auth, reviewing, reporting, editing]);
 
-  const active =
-    scenes.length && !example
-      ? scenes.filter((e) => e.status === "published" && new Date(e.ends_at) > new Date())
-      : sampleScenes;
-  const examples = !scenes.length || example;
+  const active = scenes.filter((e) => e.status === "published" && new Date(e.ends_at) > new Date());
   const visible = filterScenes(active, filters);
   const own = scenes.filter((e) => e.host_id === user?.id);
   useEffect(() => {
@@ -262,7 +257,13 @@ export function SocialApp() {
     window.addEventListener("hashchange", sync);
     void refresh();
     if (api.configured()) {
-      const c = api.db();
+      let c;
+      try {
+        c = api.db();
+      } catch (e) {
+        setProblem(api.errorText(e));
+        return () => window.removeEventListener("hashchange", sync);
+      }
       const { data } = c.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user ?? null);
         setTimeout(() => void personal(), 0);
@@ -276,19 +277,17 @@ export function SocialApp() {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   useEffect(() => {
-    if (window.location.pathname.replace(/\/$/, "") === "/auth") {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    if (
+      window.location.pathname.replace(/\/$/, "") === "/auth" ||
+      query.has("code") ||
+      query.has("error") ||
+      hash.has("error")
+    ) {
       void (async () => {
         try {
-          const q = new URLSearchParams(location.search);
-          if (q.has("error")) throw Error("Sign-in was cancelled. Please try again.");
-          const { error } = await api.db().auth.getSession();
-          if (error) throw error;
-          const { data, error: verify } = await api.db().auth.getUser();
-          if (verify || !data.user)
-            throw (
-              verify ??
-              Error("No sign-in session was received. Start again from the sign-in button.")
-            );
+          await api.completeGoogle();
           location.replace("/#profile");
         } catch (e) {
           setProblem(api.errorText(e));
@@ -341,7 +340,7 @@ export function SocialApp() {
   }
   async function save(e: Scene) {
     if (e.sample) {
-      setNotice("This is a preview event. Real events can be saved once hosts publish them.");
+      setNotice("This listing is unavailable. Please choose a published gathering.");
       return;
     }
     if (!requireProfile()) return;
@@ -393,7 +392,7 @@ export function SocialApp() {
       <button className="card-image" onClick={() => open(e)} aria-label={`View ${e.title}`}>
         <SceneArt event={e} />
         <span className="card-tag">
-          {e.sample ? "CONCEPT PREVIEW" : e.alcohol_free ? "SOBER SCENE" : "25+ · ALCOHOL AT VENUE"}
+          {e.alcohol_free ? "SOBER SCENE" : "25+ · ALCOHOL AT VENUE"}
         </span>
       </button>
       <button
@@ -416,8 +415,7 @@ export function SocialApp() {
         </p>
         <div className="card-bottom">
           <span>
-            {e.sample ? "Illustrative attendance" : `${e.confirmed_count} confirmed`}{" "}
-            <span className="tiny-dot">·</span> {e.min_age}
+            {`${e.confirmed_count} confirmed`} <span className="tiny-dot">·</span> {e.min_age}
             {e.max_age ? `–${e.max_age}` : "+"}
           </span>
           <strong>{inr(e.price)}</strong>
@@ -459,7 +457,7 @@ export function SocialApp() {
               setShowFilters(true);
             }}
           >
-            <MapPin size={15} /> Gurgaon first <ChevronDown size={12} />
+            <MapPin size={15} /> {filters.area || "Delhi NCR"} <ChevronDown size={12} />
           </button>
           <button className="account-btn" onClick={() => (user ? nav("tickets") : setAuth(true))}>
             {user ? (
@@ -497,7 +495,7 @@ export function SocialApp() {
           <section className="s-hero">
             <div className="hero-left">
               <p className="eyebrow">
-                <span className="live-dot" /> GURGAON FIRST. GOOD SCENES ONLY.
+                <span className="live-dot" /> GOOD PEOPLE. GOOD SCENES ONLY.
               </p>
               <h1>
                 Go out.
@@ -549,7 +547,7 @@ export function SocialApp() {
               </div>
               <div className="hero-label">
                 <span>
-                  GURGAON
+                  YOUR CITY
                   <br />
                   AFTER HOURS
                 </span>
@@ -572,13 +570,11 @@ export function SocialApp() {
                   ADMIT ONE · BE YOURSELF <span>✳︎</span>
                 </div>
               </div>
-              <span className="photo-disclosure">
-                AI-created brand artwork · not an actual event
-              </span>
+              <span className="photo-disclosure">NIMANTRAN ORIGINAL ARTWORK</span>
             </div>
           </section>
           <div className="s-marquee" aria-hidden="true">
-            <span>NEW FACES</span>✳︎<span>GOOD ENERGY</span>✳︎<span>GURGAON FIRST</span>✳︎
+            <span>NEW FACES</span>✳︎<span>GOOD ENERGY</span>✳︎<span>GOOD COMPANY</span>✳︎
             <span>YOUR KIND OF PLANS</span>✳︎<span>NEW FACES</span>✳︎<span>GOOD ENERGY</span>
           </div>
           <section className="s-section categories-section">
@@ -605,9 +601,7 @@ export function SocialApp() {
                     nav("explore");
                   }}
                 >
-                  <span className="category-symbol">
-                    <CategoryIcon category={c.id} />
-                  </span>
+                  <CategoryArt category={c.id} />
                   <span>
                     <strong>{c.name}</strong>
                     <small>{c.sub}</small>
@@ -629,13 +623,23 @@ export function SocialApp() {
                 Explore the line-up <ArrowRight size={18} />
               </button>
             </div>
-            <div className="preview-note">
-              <Sparkles size={17} />
-              {examples
-                ? "A little taste of what’s possible. These are concept previews, not bookable events."
-                : "Real gatherings from independent hosts. Check each listing’s inclusions and rules."}
-            </div>
-            <div className="event-grid">{active.slice(0, 3).map(card)}</div>
+            {active.length ? (
+              <div className="event-grid">{active.slice(0, 3).map(card)}</div>
+            ) : (
+              <div className="launch-invitation">
+                <span>✦</span>
+                <div>
+                  <h3>Make the first move.</h3>
+                  <p>
+                    The guest list starts with a good host. Bring your board-game night, supper club
+                    or music gathering to Nimantran.
+                  </p>
+                </div>
+                <button className="s-btn primary" onClick={() => nav("host")}>
+                  Create a gathering <Plus size={18} />
+                </button>
+              </div>
+            )}
           </section>
           <section className="story-section">
             <div className="section-heading">
@@ -707,13 +711,38 @@ export function SocialApp() {
                 A little filmy souvenir for your next good story. Every confirmed booking gets a
                 Nimantran styled for its scene.
               </p>
-              <button className="text-arrow" onClick={() => setTicket({ event: sampleScenes[0]! })}>
-                Take a closer look <ArrowUpRight size={19} />
+              <button className="text-arrow" onClick={() => nav("explore")}>
+                Find your next invitation <ArrowUpRight size={19} />
               </button>
-              <small>Design preview. Tickets are issued only for confirmed bookings.</small>
+              <small>Your invitation is issued when your host confirms your booking.</small>
             </div>
             <div className="ticket-showcase">
-              <Invitation event={sampleScenes[0]!} />
+              <div
+                className="ticket-theme dance"
+                style={{ "--ticket-color": "#b63360" } as React.CSSProperties}
+              >
+                <div className="ticket-top">
+                  <span>nimantran ✦</span>
+                  <Ticket size={27} />
+                </div>
+                <p className="eyebrow">AAJ KI MEHFIL</p>
+                <h3>
+                  Your name.
+                  <br />
+                  Your scene.
+                  <br />
+                  Your Nimantran.
+                </h3>
+                <p className="ticket-promise">
+                  Styled for the occasion.
+                  <br />
+                  Made just for your confirmed plan.
+                </p>
+                <div className="ticket-perf" />
+                <div className="ticket-bottom">
+                  <span>GOOD COMPANY. GREAT STORIES.</span>
+                </div>
+              </div>
               <div className="ticket-side-label">YOU’RE ON THE LIST. ✳︎</div>
             </div>
           </section>
@@ -770,7 +799,7 @@ export function SocialApp() {
         <main className="s-section explore-page">
           <div className="explore-heading">
             <div>
-              <p className="eyebrow">GURGAON FIRST · ADULTS ONLY</p>
+              <p className="eyebrow">GOOD COMPANY · ADULTS ONLY</p>
               <h1>
                 Find your <em>scene.</em>
               </h1>
@@ -843,6 +872,7 @@ export function SocialApp() {
               <label>
                 City
                 <select
+                  aria-label="City"
                   value={filters.area}
                   onChange={(e) => setFilters({ ...filters, area: e.target.value })}
                 >
@@ -859,12 +889,13 @@ export function SocialApp() {
                 <input
                   type="date"
                   value={filters.date}
-                  onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+                  onChange={(e) => setFilters({ ...filters, date: e.target.value, period: "" })}
                 />
               </label>
               <label>
                 Maximum price
                 <select
+                  aria-label="Maximum price"
                   value={filters.price}
                   onChange={(e) => setFilters({ ...filters, price: Number(e.target.value) })}
                 >
@@ -887,8 +918,54 @@ export function SocialApp() {
                 />
               </label>
               <label>
+                Time of day
+                <select
+                  aria-label="Time of day"
+                  value={filters.time}
+                  onChange={(e) => setFilters({ ...filters, time: e.target.value })}
+                >
+                  <option value="">Any time</option>
+                  <option value="day">Daytime · 6am–6pm</option>
+                  <option value="night">Evening & late night</option>
+                </select>
+              </label>
+              <label>
+                Language
+                <select
+                  aria-label="Language"
+                  value={filters.language}
+                  onChange={(e) => setFilters({ ...filters, language: e.target.value })}
+                >
+                  <option value="">Any language</option>
+                  <option>Hindi</option>
+                  <option>English</option>
+                  <option>Punjabi</option>
+                </select>
+              </label>
+              <label>
+                Host rating
+                <select
+                  aria-label="Host rating"
+                  value={filters.minRating}
+                  onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
+                >
+                  <option value={0}>All hosts, including new</option>
+                  <option value={4}>4 stars and above</option>
+                  <option value={4.5}>4.5 stars and above</option>
+                </select>
+              </label>
+              <label className="check-field">
+                <input
+                  type="checkbox"
+                  checked={filters.openOnly}
+                  onChange={(e) => setFilters({ ...filters, openOnly: e.target.checked })}
+                />
+                Places available
+              </label>
+              <label>
                 Atmosphere
                 <select
+                  aria-label="Atmosphere"
                   value={filters.vibe}
                   onChange={(e) => setFilters({ ...filters, vibe: e.target.value })}
                 >
@@ -900,18 +977,40 @@ export function SocialApp() {
               </label>
             </div>
           )}
-          <div className="results-heading">
-            <span>
-              {loading
-                ? "Finding scenes…"
-                : `${visible.length} ${examples ? "concept previews" : "gatherings"}`}
-            </span>
-            <div>
-              {scenes.length > 0 && (
-                <button className="s-link" onClick={() => setExample(!example)}>
-                  {examples ? "Show live events" : "Explore previews"}
+          <div className="discovery-toolbar">
+            <div className="period-chips">
+              {[
+                ["", "Any day"],
+                ["today", "Today"],
+                ["weekend", "This weekend"],
+                ["week", "Next 7 days"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  aria-pressed={filters.period === id}
+                  onClick={() => setFilters({ ...filters, period: id!, date: "" })}
+                >
+                  {label}
                 </button>
-              )}
+              ))}
+            </div>
+            <label>
+              Sort by
+              <select
+                aria-label="Sort by"
+                value={filters.sort}
+                onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+              >
+                <option value="soonest">Soonest first</option>
+                <option value="price">Lowest price</option>
+                <option value="popular">Most confirmed guests</option>
+                <option value="rating">Host rating</option>
+              </select>
+            </label>
+          </div>
+          <div className="results-heading">
+            <span>{loading ? "Finding scenes…" : `${visible.length} gatherings`}</span>
+            <div>
               <button
                 className="icon-btn"
                 aria-label="Refresh events"
@@ -921,32 +1020,47 @@ export function SocialApp() {
               </button>
             </div>
           </div>
-          {examples && (
-            <div className="preview-note">
-              <Sparkles size={17} />
-              These are fictional event concepts with illustrative attendance. They cannot be
-              booked.
-            </div>
-          )}
           {problem && (
             <details className="setup-details">
               <summary>Connection information</summary>
               <p>{problem}</p>
             </details>
           )}
-          {!visible.length ? (
+          {map ? (
+            <div className="map-layout">
+              <div className="map-list">
+                {visible.length ? (
+                  visible.map(card)
+                ) : (
+                  <div className="empty-state">
+                    <MapPin size={30} />
+                    <h3>No gatherings in these filters yet.</h3>
+                    <p>Try another area or host a gathering.</p>
+                    <button className="s-btn outline" onClick={() => nav("host")}>
+                      Be the host
+                    </button>
+                  </div>
+                )}
+              </div>
+              <SceneMap events={visible} onSelect={open} />
+            </div>
+          ) : !visible.length ? (
             <div className="empty-state">
               <Search size={36} />
-              <h2>No scenes match just yet.</h2>
-              <p>Try another category, date or budget.</p>
-              <button className="s-btn outline" onClick={() => setFilters(initialFilters)}>
-                Clear filters
+              <h2>
+                {active.length ? "Find a different scene." : "Your next good plan starts here."}
+              </h2>
+              <p>
+                {active.length
+                  ? "Try another category, date or budget."
+                  : "No upcoming gatherings are listed yet. Host one and bring your people together."}
+              </p>
+              <button
+                className="s-btn outline"
+                onClick={() => (active.length ? setFilters(initialFilters) : nav("host"))}
+              >
+                {active.length ? "Clear filters" : "Host a gathering"}
               </button>
-            </div>
-          ) : map ? (
-            <div className="map-layout">
-              <div className="map-list">{visible.map(card)}</div>
-              <SceneMap events={visible} onSelect={open} />
             </div>
           ) : (
             <div className="event-grid">{visible.map(card)}</div>
@@ -957,7 +1071,7 @@ export function SocialApp() {
         <main className="s-section host-page">
           <div className="explore-heading">
             <div>
-              <p className="eyebrow">BRING PEOPLE TOGETHER · GURGAON FIRST</p>
+              <p className="eyebrow">BRING PEOPLE TOGETHER · GOOD COMPANY</p>
               <h1>
                 Be the <em>reason.</em>
               </h1>
@@ -1132,7 +1246,7 @@ export function SocialApp() {
               <h1>Your next scene starts here.</h1>
               <p>Sign in to manage your profile, saved gatherings and bookings.</p>
               <button className="s-btn primary" onClick={() => setAuth(true)}>
-                Continue with Google <ArrowUpRight size={18} />
+                {busy ? "Opening Google…" : "Continue with Google"} <ArrowUpRight size={18} />
               </button>
             </div>
           ) : view === "profile" ? (
@@ -1147,6 +1261,9 @@ export function SocialApp() {
                   act(async () => {
                     await api.rpc("social_profile", data);
                     await personal();
+                    const resume = sessionStorage.getItem("nimantran-auth-return");
+                    sessionStorage.removeItem("nimantran-auth-return");
+                    if (resume === "host") nav("host");
                     setNotice("Your profile is saved.");
                   })
                 }
@@ -1277,7 +1394,7 @@ export function SocialApp() {
             nimantran<span>✳︎</span>
           </a>
           <p>Your city. Your people. Your next story.</p>
-          <small>Gurgaon first. Adults 18+ only.</small>
+          <small>Delhi NCR. Adults 18+ only.</small>
         </div>
         <div>
           <button onClick={() => nav("explore")}>Find your scene</button>
@@ -1303,10 +1420,10 @@ export function SocialApp() {
             <p>Sign in with Google to introduce yourself, host a gathering or manage your plans.</p>
             <button
               className="s-btn primary"
-              disabled={busy || !api.configured()}
-              onClick={() => void act(api.google)}
+              disabled={busy}
+              onClick={() => void act(() => api.google(view))}
             >
-              Continue with Google <ArrowUpRight size={18} />
+              {busy ? "Opening Google…" : "Continue with Google"} <ArrowUpRight size={18} />
             </button>
             <p className="fineprint">
               Adults 18+ only. You’ll confirm your date of birth before requesting a place. Google
@@ -1314,8 +1431,7 @@ export function SocialApp() {
             </p>
             {!api.configured() && (
               <div className="preview-note">
-                Account setup isn’t connected in this build. The event concepts are available to
-                explore.
+                Sign-in is temporarily unavailable. Please try again once account setup is complete.
               </div>
             )}
             {problem && <p className="form-error">{problem}</p>}
@@ -1323,11 +1439,7 @@ export function SocialApp() {
         </Modal>
       )}
       {selected && (
-        <Modal
-          title={selected.sample ? "A TASTE OF THE SCENE · CONCEPT PREVIEW" : "YOUR NEXT SCENE"}
-          onClose={() => setSelected(null)}
-          wide
-        >
+        <Modal title="YOUR NEXT SCENE" onClose={() => setSelected(null)} wide>
           <div className="detail-layout">
             <div>
               <SceneArt event={selected} />
@@ -1359,6 +1471,10 @@ export function SocialApp() {
                       : "Alcohol available · age 25+ platform policy"}
                   </span>
                 </div>
+                <p className="fineprint">
+                  Category artwork sets the mood. Check the host’s description for actual activities
+                  and performers.
+                </p>
                 <h3>Know before you go</h3>
                 <dl className="inclusions">
                   {[
@@ -1385,9 +1501,7 @@ export function SocialApp() {
                   <div>
                     <strong>Hosted by {selected.host_name}</strong>
                     <p>
-                      {selected.sample
-                        ? "Example host · no real hosting history"
-                        : `${selected.host_events} completed gatherings · ${selected.review_count ? `${selected.rating} / 5 from ${selected.review_count} reviews` : "New host · no reviews yet"}`}
+                      {`${selected.host_events} completed gatherings · ${selected.review_count ? `${selected.rating} / 5 from ${selected.review_count} reviews` : "New host · no reviews yet"}`}
                     </p>
                   </div>
                 </div>
@@ -1466,23 +1580,10 @@ export function SocialApp() {
               <p>{selected.price ? "per person · see all inclusions" : "Entry is free"}</p>
               <div className="booking-count">
                 <Users size={18} />
-                {selected.sample
-                  ? "Example guest count"
-                  : `${selected.confirmed_count} confirmed`}{" "}
-                · {Math.max(0, selected.capacity - selected.confirmed_count)} places left
-                {selected.sample ? " (illustrative)" : ""}
+                {`${selected.confirmed_count} confirmed`} ·{" "}
+                {Math.max(0, selected.capacity - selected.confirmed_count)} places left
               </div>
-              {selected.sample ? (
-                <>
-                  <p className="preview-note">
-                    This is a fictional concept, not an event you can attend. No places or payments
-                    are being accepted.
-                  </p>
-                  <button className="s-btn primary" onClick={() => setTicket({ event: selected })}>
-                    Preview the invitation <Ticket size={17} />
-                  </button>
-                </>
-              ) : selected.host_id === user?.id ? (
+              {selected.host_id === user?.id ? (
                 <button className="s-btn primary" onClick={() => void manageEvent(selected)}>
                   Manage your guests
                 </button>
@@ -1573,7 +1674,7 @@ export function SocialApp() {
           <p className="fineprint">
             {ticket.booking
               ? "Keep your code private. View the exact venue in My plans."
-              : "Ticket design preview only. Not valid for entry."}
+              : "A ticket is issued only after booking confirmation."}
           </p>
         </Modal>
       )}
@@ -1938,6 +2039,11 @@ function HostForm({
       const raw = sessionStorage.getItem("nimantran-host-draft");
       if (!raw) return;
       const draft = JSON.parse(raw) as Record<string, string>;
+      if (draft["starts_at"] && !draft["event_date"]) {
+        draft["event_date"] = draft["starts_at"].slice(0, 10);
+        draft["start_time"] = draft["starts_at"].slice(11, 16);
+        draft["end_time"] = draft["ends_at"]?.slice(11, 16) ?? "";
+      }
       if (draft["category"]) setCategory(draft["category"]);
       if (draft["lat"] && draft["lng"])
         setPlace({ lat: Number(draft["lat"]), lng: Number(draft["lng"]) });
@@ -1986,14 +2092,17 @@ function HostForm({
       {label}
       {options.textarea ? (
         <textarea
+          aria-label={label}
           name={name}
           required={!options.optional}
           minLength={name === "description" ? 30 : 2}
           maxLength={name === "description" ? 3000 : 1500}
           placeholder={options.placeholder}
+          defaultValue={options.value}
         />
       ) : (
         <input
+          aria-label={label}
           name={name}
           type={options.type ?? "text"}
           step={
@@ -2016,20 +2125,24 @@ function HostForm({
     }
     const f = new FormData(e.currentTarget);
     const data = Object.fromEntries(f);
-    const starts = new Date(`${data["starts_at"]}:00+05:30`),
-      ends = new Date(`${data["ends_at"]}:00+05:30`);
-    if (ends <= starts) {
+    let timing;
+    try {
+      timing = eventTimes(
+        String(data["event_date"]),
+        String(data["start_time"]),
+        String(data["end_time"]),
+      );
+    } catch (error) {
       form.current
-        ?.querySelector<HTMLInputElement>('[name="ends_at"]')
-        ?.setCustomValidity("End time must be after the start time.");
+        ?.querySelector<HTMLInputElement>('[name="end_time"]')
+        ?.setCustomValidity(api.errorText(error));
       form.current?.reportValidity();
       return;
     }
     await onPublish({
       ...data,
       category,
-      starts_at: starts.toISOString(),
-      ends_at: ends.toISOString(),
+      ...timing,
       alcohol_free: sober,
       solo: f.get("solo") === "on",
     });
@@ -2042,7 +2155,7 @@ function HostForm({
       onSubmit={(e) => void submit(e)}
       onChange={() => {
         saveDraft();
-        form.current?.querySelector<HTMLInputElement>('[name="ends_at"]')?.setCustomValidity("");
+        form.current?.querySelector<HTMLInputElement>('[name="end_time"]')?.setCustomValidity("");
       }}
     >
       <div className="form-steps">
@@ -2100,10 +2213,15 @@ function HostForm({
       </fieldset>
       <fieldset hidden={step !== 2}>
         <legend>The details</legend>
+        {field("event_date", "Event date", { type: "date" })}
         <div className="form-pair">
-          {field("starts_at", "Starts · India time", { type: "datetime-local" })}
-          {field("ends_at", "Ends · India time", { type: "datetime-local" })}
+          {field("start_time", "Start time · IST", { type: "time" })}
+          {field("end_time", "End time · IST", { type: "time" })}
         </div>
+        <p className="fineprint">
+          One date, two times. An end time earlier than the start means the gathering ends the next
+          morning.
+        </p>
         <div className="form-pair">
           <label>
             City
@@ -2175,6 +2293,7 @@ function HostForm({
         {field("language", "Languages spoken", { value: "English & Hindi" })}
         {field("accessibility", "Venue accessibility", {
           placeholder: "Describe stairs, seating, toilets and any limitations.",
+          value: "Contact the host for access details.",
         })}
         <button type="button" className="s-btn primary" onClick={() => setStep(3)}>
           Next: the welcome <ArrowRight size={17} />
@@ -2184,25 +2303,34 @@ function HostForm({
         <legend>The welcome</legend>
         {field("food", "Food included", {
           placeholder: "Vegetarian snacks, a full meal, or explicitly “Not included”.",
+          value: "Not included",
         })}
         {field("drinks", "Drinks included", {
           placeholder: "Water and one soft drink per guest, for example.",
+          value: "Not included",
         })}
         {field("includes", "Other inclusions", {
           placeholder: "Hosted games and equipment, art materials, etc.",
+          value: "Entry to the gathering",
         })}
         {field("extra_costs", "What costs extra?", {
           placeholder: "Additional café orders paid separately, or “Nothing”.",
+          value: "Personal purchases are extra",
         })}
-        {field("bring", "What should guests bring?", { optional: true })}
-        {field("rules", "House rules", {
-          textarea: true,
-          placeholder: "Respect boundaries, ask before photos, venue rules…",
-        })}
-        {field("cancellation", "Cancellation terms", {
-          textarea: true,
-          placeholder: "Explain the deadline and how you will handle cancellations.",
-        })}
+        <details className="host-extra-details">
+          <summary>House rules, cancellations & what to bring</summary>{" "}
+          {field("bring", "What should guests bring?", { optional: true })}
+          {field("rules", "House rules", {
+            textarea: true,
+            placeholder: "Respect boundaries, ask before photos, venue rules…",
+            value: "Respect personal boundaries. Ask before taking photos. Follow venue rules.",
+          })}
+          {field("cancellation", "Cancellation terms", {
+            textarea: true,
+            placeholder: "Explain the deadline and how you will handle cancellations.",
+            value: "You may cancel your booking before the event starts.",
+          })}
+        </details>
         <label className="check-field">
           <input type="checkbox" required />I have permission to host at this venue, will follow
           applicable law and age restrictions, and have described all inclusions accurately.
@@ -2230,6 +2358,7 @@ function HostForm({
                   fs as HTMLFieldSetElement,
                 );
                 if (index >= 0) setStep(index + 1);
+                invalid.closest("details")?.setAttribute("open", "");
               }
             }}
           >

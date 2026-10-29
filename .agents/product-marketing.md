@@ -4,7 +4,7 @@ Version 2 · 29 October 2026. The founder explicitly replaced the wedding produc
 
 ## Product and audience
 
-Nimantran helps adults discover and host interest-led social gatherings. Gurgaon first, with Delhi NCR search available. Primary audience hypothesis: adults looking for welcoming activities and new connections, including people arriving solo or new to the city. Hosts may be individual organisers or venue/activity operators. No customer interviews or willingness-to-pay evidence has been supplied.
+Nimantran helps adults discover and host interest-led social gatherings. Delhi NCR, with Delhi NCR search available. Primary audience hypothesis: adults looking for welcoming activities and new connections, including people arriving solo or new to the city. Hosts may be individual organisers or venue/activity operators. No customer interviews or willingness-to-pay evidence has been supplied.
 
 Positioning to test: **Go out. Find your people.** Supporting line: **Thoda filmy. Thoda spontaneous. Very you.** Two main actions: find a gathering and host a gathering.
 
@@ -18,7 +18,7 @@ Attendees filter by interests, city/neighbourhood search, date, budget, age elig
 
 The code includes a new responsive frontend, Google/Supabase integration, additive RLS migration, host publication, introductions, approval, capacity checks, private exact addresses, confirmed themed SVG tickets, check-in, attendance-backed reviews, saves and reports. Local PostgreSQL and browser HTTP-fixture tests pass. Applying the migration to the hosted project, actual Google sign-in, real cross-device acceptance and Netlify publication status have not been verified.
 
-When no live records exist, fictional event concepts are explicitly labelled and cannot be booked. Hero photography is generated brand artwork, not customer/event proof. Identity and age are not independently verified. Accounts are 18+; non-sober listings use a conservative platform age minimum of 25 and host responsibility for applicable local/venue rules. Do not claim the platform guarantees safety.
+When no live records exist, the production catalogue is empty; the homepage uses illustrated category collections. No fictional event listings are presented. Hero photography is generated brand artwork, not customer/event proof. Identity and age are not independently verified. Accounts are 18+; non-sober listings use a conservative platform age minimum of 25 and host responsibility for applicable local/venue rules. Do not claim the platform guarantees safety.
 
 Paid approvals, checkout, payouts and refunds are not implemented. Free events can complete the booking flow after backend setup. Prior Dodo wedding-software onboarding does not establish eligibility for marketplace event payments or host payouts.
 

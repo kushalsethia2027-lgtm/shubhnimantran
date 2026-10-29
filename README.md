@@ -1,6 +1,6 @@
 # Nimantran
 
-**Go out. Find your people.** A Gurgaon-first, adults-only social events web app with separate attendee and host experiences.
+**Go out. Find your people.** A Delhi NCR, adults-only social events web app with separate attendee and host experiences.
 
 Discover events by interest, neighbourhood, budget, age eligibility, solo-friendly atmosphere and sober preference. Hosts list gatherings with clear inclusions and review guest introductions before approving them. Confirmed free bookings receive category-themed invitations; hosts check guests in and attendees can review completed events.
 
@@ -21,7 +21,7 @@ Copy `.env.example` to `.env`, supply the existing Supabase project's public URL
 
 See [complete setup, permissions, tests and launch limitations](docs/SOCIAL-EVENTS.md).
 
-Without the backend, clearly labelled fictional event concepts let visitors explore the design. These concepts cannot be booked. Paid checkout and ₹250 referral credits are not active. Free live events support requests, host approval, confirmed tickets, check-in and attendance-backed reviews once the migration and Google authentication are configured.
+The homepage uses original illustrated category collections. Discovery shows only published host listings; an empty catalogue is shown when none exist. Paid checkout and ₹250 referral credits are not active. Free live events support requests, host approval, confirmed tickets, check-in and attendance-backed reviews once the migration and Google authentication are configured.
 
 ## Deploy to Netlify
 

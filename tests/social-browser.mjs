@@ -109,7 +109,31 @@ async function context(id) {
     const name = u.pathname.split("/").at(-1);
     let data = [];
     let status = 200;
-    if (u.pathname === "/auth/v1/user") data = users[id] ?? {};
+    if (u.pathname === "/auth/v1/authorize") {
+      data = { message: "OAuth intercepted by test" };
+    } else if (u.pathname === "/auth/v1/token") {
+      assert.equal(body.auth_code, "fixture-google-code");
+      assert.ok(body.code_verifier?.length > 20);
+      id = guest;
+      const token =
+        Buffer.from("{}").toString("base64url") +
+        "." +
+        Buffer.from(
+          JSON.stringify({
+            sub: id,
+            role: "authenticated",
+            exp: Math.floor(Date.now() / 1000) + 3600,
+          }),
+        ).toString("base64url") +
+        ".fixture";
+      data = {
+        access_token: token,
+        refresh_token: "oauth-fixture-refresh",
+        token_type: "bearer",
+        expires_in: 3600,
+        user: users[id],
+      };
+    } else if (u.pathname === "/auth/v1/user") data = users[id] ?? {};
     else if (name === "social_events")
       data = scenes.map((e) => ({
         ...e,
@@ -229,27 +253,63 @@ try {
       .evaluate((e) => e.complete && e.naturalWidth > 0),
     true,
   );
+  assert.equal(await a.locator(".category-card .category-art").count(), 6);
+  assert.equal(
+    await a.getByText(/Gurgaon first|concept preview|illustrative attendance/i).count(),
+    0,
+  );
   await a.getByRole("button", { name: "Find my scene" }).click();
   await a.getByRole("button", { name: /Khel Khel Mein/ }).click();
-  assert.equal(await a.locator(".event-card").count(), 1);
-  await a.locator(".card-title").click();
-  await a.getByText("This is a fictional concept, not an event you can attend.").waitFor();
-  assert.equal(await a.getByRole("button", { name: "Request to join", exact: true }).count(), 0);
-  await a.getByRole("button", { name: "Preview the invitation" }).click();
-  await a.locator("dialog").last().getByText("DESIGN PREVIEW · NOT VALID FOR ENTRY").waitFor();
-  await a.locator("dialog").last().getByRole("button", { name: "Close dialog" }).click();
-  await a.getByRole("button", { name: "Close dialog" }).click();
+  await a.getByRole("heading", { name: "Your next good plan starts here." }).waitFor();
+  assert.equal(await a.locator(".event-card").count(), 0);
+  await a.getByRole("button", { name: "Filters", exact: true }).click();
+  await a.getByLabel("Language", { exact: true }).selectOption("Hindi");
+  await a.getByLabel("Time of day").selectOption("night");
+  await a.getByLabel("Places available").check();
   await a.getByRole("button", { name: "Reset filters" }).click();
   await a.getByRole("button", { name: "Map", exact: true }).click();
   await a.getByRole("button", { name: "Zoom in" }).click();
-  await a.getByRole("button", { name: "Return map to Gurgaon" }).click();
-  assert.equal(await a.locator(".map-price").count(), 6);
+  await a.getByRole("button", { name: "Show Delhi NCR" }).click();
+  assert.equal(await a.locator(".map-price").count(), 0);
   await a.setViewportSize({ width: 390, height: 844 });
   assert.equal(await a.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-  await a.screenshot({ path: "/tmp/nimantran-social-discovery-mobile.png", fullPage: true });
   await anon.close();
   console.log(
-    "PASS discovery, category filters, preview booking denial, tickets, map controls, mobile overflow",
+    "PASS real empty catalogue, category art, extra filters, map controls, mobile overflow",
+  );
+  const oauth = await context();
+  const o = await oauth.newPage();
+  await o.goto(base);
+  await o.getByRole("button", { name: "Sign in", exact: true }).click();
+  await o.getByRole("button", { name: "Continue with Google", exact: true }).click();
+  await o.waitForURL((url) => url.hostname === "social-fixture.supabase.co");
+  const authUrl = new URL(o.url());
+  assert.equal(authUrl.searchParams.get("provider"), "google");
+  assert.equal(authUrl.searchParams.get("redirect_to"), base + "/auth/");
+  assert.ok(authUrl.searchParams.get("code_challenge"));
+  await o.goto(base + "/auth/?code=fixture-google-code");
+  await o.waitForURL(base + "/#profile");
+  await o.getByRole("heading", { name: "A little hello." }).waitFor();
+  await oauth.close();
+  const fallback = await context();
+  const fallbackPage = await fallback.newPage();
+  await fallbackPage.goto(base);
+  await fallbackPage.getByRole("button", { name: "Sign in", exact: true }).click();
+  await fallbackPage.getByRole("button", { name: "Continue with Google", exact: true }).click();
+  await fallbackPage.waitForURL((url) => url.hostname === "social-fixture.supabase.co");
+  await fallbackPage.goto(base + "/?code=fixture-google-code");
+  await fallbackPage.waitForURL(base + "/#profile");
+  await fallback.close();
+  const cancelled = await context();
+  const cancelledPage = await cancelled.newPage();
+  await cancelledPage.goto(
+    base + "/#error=access_denied&error_description=Google+sign-in+was+cancelled",
+  );
+  await cancelledPage.getByText("Google sign-in was cancelled", { exact: true }).waitFor();
+  assert.equal(new URL(cancelledPage.url()).search, "");
+  await cancelled.close();
+  console.log(
+    "PASS Google OAuth authorize, PKCE exchange, verified-user return, cancellation feedback and callback URL cleanup",
   );
   const hc = await context(host);
   const h = await hc.newPage();
@@ -263,8 +323,11 @@ try {
     );
   await h.getByRole("button", { name: "Next: the details" }).click();
   const date = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
-  await h.getByLabel("Starts · India time").fill(date + "T16:00");
-  await h.getByLabel("Ends · India time").fill(date + "T19:00");
+  assert.equal(await h.locator('input[type="date"]').count(), 1);
+  assert.equal(await h.locator('input[type="datetime-local"]').count(), 0);
+  await h.getByLabel("Event date", { exact: true }).fill(date);
+  await h.getByLabel("Start time · IST").fill("16:00");
+  await h.getByLabel("End time · IST").fill("19:00");
   await h.getByLabel("Neighbourhood", { exact: true }).fill("Sector 29");
   await h.getByLabel("Exact venue address").fill("Fixture private venue, Gurgaon");
   await h
@@ -275,6 +338,7 @@ try {
   await h.getByLabel("Drinks included").fill("Water and one soft drink");
   await h.getByLabel("Other inclusions").fill("Hosted board games and equipment");
   await h.getByLabel("What costs extra?").fill("Additional café orders");
+  await h.getByText("House rules, cancellations & what to bring", { exact: true }).click();
   await h
     .getByLabel("House rules", { exact: true })
     .fill("Respect personal boundaries. Ask before taking photos.");

@@ -82,3 +82,17 @@ No money, automatic messages or referral rewards are sent by this release. Appro
 - TanStack development SSR smoke check: passed; retired wedding API returns 410.
 - Desktop and mobile screenshots: `docs/screenshots/social-home-desktop.jpg` and `docs/screenshots/social-home-mobile.jpg`.
 - Not performed: hosted migration application, real hosted Google account flow, real cross-device Supabase acceptance, Netlify deployment status verification, live payments/payouts or referral credit issuance.
+
+## 30 October 2026 refinement
+
+The owner reported Google sign-in navigating to a misspelled `*.shopabase.co` domain (DNS NXDOMAIN). `auth-config.ts` now repairs that specific typo to the existing public project URL `https://ozvuruhglhyhuparvael.supabase.co`; normal configured project URLs remain configurable. Netlify's `VITE_SUPABASE_URL` should still be corrected to that exact URL. The public key must belong to this project. No deployment secret or provider setting was changed from this environment.
+
+Google OAuth now uses explicit redirect and PKCE callback exchange, verified-user lookup, provider cancellation/error feedback and callback URL cleanup. Auth persists in localStorage, including its PKCE verifier across redirect/tab boundaries; existing sessionStorage credentials are migrated. Only auth credentials use that storage, not guest/event database rows. Hosted Google consent/provider settings and live sign-in still require real acceptance testing.
+
+The host form uses one event date plus start/end times in IST. An earlier end time means the following morning; identical times are rejected. Existing unsaved date-time drafts are migrated. Food/drinks default to “Not included,” other fields have editable sensible defaults, and additional house rules sit in a disclosure.
+
+The regional “first” slogan is removed from UI and metadata. Six original AI-generated Bollywood-inspired category illustrations replace flat poster placeholders. They are category artwork, not photographs or promises of actual performers. Fictional event data has been moved out of production code into test fixtures. The production app renders only published event records, with a designed empty catalogue when none exist, rather than disguising example listings as real events.
+
+New filters: today/weekend/next seven days, day/evening, language, places available and minimum host rating; sorting by upcoming date, price, confirmed attendance or rating. Existing category, city, date, budget, age, atmosphere, solo and sober filters remain.
+
+Refinement verification: 73 unit tests pass, including the reported URL typo, same-day/overnight schedules and additional filters. Browser HTTP fixtures pass Google authorisation parameters, PKCE exchange, `/auth/` and root-URL return handling, provider cancellation feedback, callback cleanup, the simplified host form and the existing approval/ticket/review journey. A no-key build also shows actionable sign-in feedback instead of a disabled button. Type checks, lint (zero errors/six existing warnings), static and full builds pass. Live Google sign-in remains unverified because provider/deployment management access is unavailable here.
